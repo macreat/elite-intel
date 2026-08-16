@@ -24,13 +24,14 @@ services:
       dockerfile: Dockerfile
     container_name: elite_backend
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-elite_db}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-elite_db}
       ENVIRONMENT: ${ENVIRONMENT:-development}
-      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:${FRONTEND_PORT:-3000}}
       API_LOG_LEVEL: ${API_LOG_LEVEL:-info}
       IMPORT_MAX_FILE_SIZE_MB: ${IMPORT_MAX_FILE_SIZE_MB:-10}
       IMPORT_DEFAULT_LOCALE: ${IMPORT_DEFAULT_LOCALE:-es_AR}
       IMPORT_DEFAULT_CURRENCY: ${IMPORT_DEFAULT_CURRENCY:-ARS}
+      IMPORT_DEFAULT_TIMEZONE: ${IMPORT_DEFAULT_TIMEZONE:-UTC}
       IMPORT_STORAGE_DIR: ${IMPORT_STORAGE_DIR:-/tmp/elite-imports}
     ports:
       - "8000:8000"
@@ -39,14 +40,19 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - import_storage:${IMPORT_STORAGE_DIR:-/tmp/elite-imports}
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
     container_name: elite_frontend
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:80"
     depends_on:
       - backend
     volumes:
@@ -54,3 +60,4 @@ services:
 
 volumes:
   postgres_data:
+  import_storage:

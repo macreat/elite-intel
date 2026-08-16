@@ -1,10 +1,13 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 from sqlalchemy.orm import Session
 
 from app.models.enums import TransactionType
 from app.repositories.transaction_repository import TransactionRepository
+
+TimeseriesGranularity = Literal["day", "week", "month"]
 
 
 class DashboardService:
@@ -30,6 +33,18 @@ class DashboardService:
             )
         return items
 
-    def timeseries(self, *, start_date: datetime, end_date: datetime):
-        rows = self.repo.dashboard_timeseries(start_date=start_date, end_date=end_date)
+    def timeseries(
+        self,
+        *,
+        start_date: datetime,
+        end_date: datetime,
+        timezone_name: str = "UTC",
+        granularity: TimeseriesGranularity = "day",
+    ):
+        rows = self.repo.dashboard_timeseries(
+            start_date=start_date,
+            end_date=end_date,
+            timezone_name=timezone_name,
+            granularity=granularity,
+        )
         return [{"date": row[0], "income": row[1], "expenses": row[2]} for row in rows]

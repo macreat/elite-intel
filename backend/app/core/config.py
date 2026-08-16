@@ -10,6 +10,7 @@ class Settings:
     IMPORT_MAX_FILE_SIZE_MB = int(os.getenv("IMPORT_MAX_FILE_SIZE_MB", "10"))
     IMPORT_DEFAULT_LOCALE = os.getenv("IMPORT_DEFAULT_LOCALE", "es_AR")
     IMPORT_DEFAULT_CURRENCY = os.getenv("IMPORT_DEFAULT_CURRENCY", "ARS")
+    IMPORT_DEFAULT_TIMEZONE = os.getenv("IMPORT_DEFAULT_TIMEZONE", "UTC")
     IMPORT_STORAGE_DIR = Path(os.getenv("IMPORT_STORAGE_DIR", "/tmp/elite-imports"))
 
 

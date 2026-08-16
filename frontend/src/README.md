@@ -3,9 +3,10 @@
 Core application logic and UI components for the React dashboard.
 
 **Contents:**
-- `components/` - Reusable UI widgets, KPI cards, modal forms, and chart containers.
-- `pages/` - Page-level views (Dashboard, Transactions, Categories, Imports).
-- `services/` - Axios / Fetch HTTP client setup to communicate with backend endpoints.
-- `types/` - TypeScript interface definitions for transactions, categories, and API responses.
+- `components/` - Reusable UI widgets, KPI cards, forms, charts, and import wizard steps.
+- `pages/` - Page-level views (Dashboard, Transactions, Transaction Form, Import).
+- `services/` - Axios HTTP client and API integrations.
+- `types/` - TypeScript interfaces for domain and API payloads.
+- `utils/` - Shared formatting and period/date helpers.
 
-**Connects to:** Backend REST API at `/api/v1`.
+**Connects to:** Backend REST API at `/api/v1` via `VITE_API_BASE_URL`.

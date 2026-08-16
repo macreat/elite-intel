@@ -1,11 +1,10 @@
-from datetime import datetime
-
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.models.enums import TransactionType
 from app.schemas.transaction import TransactionCreate, TransactionListResponse, TransactionRead, TransactionUpdate
+from app.services.calendar import InvalidCalendarTimezone, parse_transaction_boundary
 from app.services.transaction_service import TransactionService
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
@@ -13,19 +12,26 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 @router.get("", response_model=TransactionListResponse)
 def list_transactions(
-    start_date: datetime | None = None,
-    end_date: datetime | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     type: TransactionType | None = None,
     category_id: int | None = None,
     search: str | None = None,
     page: int = 1,
     page_size: int = 20,
+    timezone_name: str = Query("UTC", alias="timezone"),
     db: Session = Depends(get_db),
 ):
+    try:
+        parsed_start_date = parse_transaction_boundary(start_date, timezone_name, end_of_day=False)
+        parsed_end_date = parse_transaction_boundary(end_date, timezone_name, end_of_day=True)
+    except (InvalidCalendarTimezone, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     service = TransactionService(db)
     items, total = service.list(
-        start_date=start_date,
-        end_date=end_date,
+        start_date=parsed_start_date,
+        end_date=parsed_end_date,
         type_filter=type,
         category_id=category_id,
         search=search,

@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import CHAR, CheckConstraint, DateTime, Enum, ForeignKey, Index, Numeric, String, Text
+from sqlalchemy import CHAR, CheckConstraint, DateTime, Enum, ForeignKey, Index, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -12,6 +12,8 @@ class Transaction(Base, TimestampMixin):
     __tablename__ = "transactions"
     __table_args__ = (
         CheckConstraint("amount > 0", name="ck_transactions_amount_positive"),
+        UniqueConstraint("import_batch_id", "source_row_number", name="uq_transactions_import_batch_row"),
+        UniqueConstraint("source_fingerprint", name="uq_transactions_source_fingerprint"),
         Index("idx_transactions_occurred_at", "occurred_at"),
         Index("idx_transactions_type_occurred_at", "transaction_type", "occurred_at"),
         Index("idx_transactions_category_id", "category_id"),
@@ -41,6 +43,7 @@ class Transaction(Base, TimestampMixin):
     import_batch_id: Mapped[int | None] = mapped_column(ForeignKey("import_batches.id"), nullable=True)
     source_row_number: Mapped[int | None] = mapped_column(nullable=True)
     record_fingerprint: Mapped[str | None] = mapped_column(CHAR(64), nullable=True)
+    source_fingerprint: Mapped[str | None] = mapped_column(CHAR(64), nullable=True)
 
     category = relationship("Category", back_populates="transactions")
     product = relationship("Product", back_populates="transactions")

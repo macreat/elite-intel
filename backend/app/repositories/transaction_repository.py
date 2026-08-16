@@ -1,5 +1,8 @@
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import Literal
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import Numeric, and_, case, cast, func, select
 from sqlalchemy.orm import Session
@@ -7,6 +10,9 @@ from sqlalchemy.orm import Session
 from app.models.category import Category
 from app.models.enums import TransactionType
 from app.models.transaction import Transaction
+from app.services.calendar import as_utc
+
+TimeseriesGranularity = Literal["day", "week", "month"]
 
 
 class TransactionRepository:
@@ -29,9 +35,9 @@ class TransactionRepository:
 
         filters = []
         if start_date is not None:
-            filters.append(Transaction.occurred_at >= start_date)
+            filters.append(Transaction.occurred_at >= as_utc(start_date))
         if end_date is not None:
-            filters.append(Transaction.occurred_at <= end_date)
+            filters.append(Transaction.occurred_at <= as_utc(end_date))
         if type_filter is not None:
             filters.append(Transaction.transaction_type == type_filter)
         if category_id is not None:
@@ -81,7 +87,7 @@ class TransactionRepository:
             cast(func.coalesce(func.sum(income_case), 0), Numeric(14, 2)),
             cast(func.coalesce(func.sum(expense_case), 0), Numeric(14, 2)),
             func.count(Transaction.id),
-        ).where(Transaction.occurred_at >= start_date, Transaction.occurred_at <= end_date)
+        ).where(Transaction.occurred_at >= as_utc(start_date), Transaction.occurred_at <= as_utc(end_date))
         income, expenses, count = self.db.execute(stmt).one()
         income = Decimal(income)
         expenses = Decimal(expenses)
@@ -101,7 +107,7 @@ class TransactionRepository:
         stmt = (
             select(Transaction.category_id, Category.name, cast(func.sum(Transaction.amount), Numeric(14, 2)))
             .join(Category, Category.id == Transaction.category_id)
-            .where(Transaction.occurred_at >= start_date, Transaction.occurred_at <= end_date)
+            .where(Transaction.occurred_at >= as_utc(start_date), Transaction.occurred_at <= as_utc(end_date))
             .group_by(Transaction.category_id, Category.name)
             .order_by(func.sum(Transaction.amount).desc())
         )
@@ -109,18 +115,41 @@ class TransactionRepository:
             stmt = stmt.where(Transaction.transaction_type == type_filter)
         return list(self.db.execute(stmt).all())
 
-    def dashboard_timeseries(self, *, start_date: datetime, end_date: datetime):
-        day = func.date(Transaction.occurred_at)
-        income_case = case((Transaction.transaction_type == TransactionType.INCOME, Transaction.amount), else_=0)
-        expense_case = case((Transaction.transaction_type == TransactionType.EXPENSE, Transaction.amount), else_=0)
-        stmt = (
-            select(
-                day.label("d"),
-                cast(func.coalesce(func.sum(income_case), 0), Numeric(14, 2)),
-                cast(func.coalesce(func.sum(expense_case), 0), Numeric(14, 2)),
-            )
-            .where(Transaction.occurred_at >= start_date, Transaction.occurred_at <= end_date)
-            .group_by(day)
-            .order_by(day)
+    def dashboard_timeseries(
+        self,
+        *,
+        start_date: datetime,
+        end_date: datetime,
+        timezone_name: str = "UTC",
+        granularity: TimeseriesGranularity = "day",
+    ):
+        stmt = select(Transaction.occurred_at, Transaction.transaction_type, Transaction.amount).where(
+            Transaction.occurred_at >= as_utc(start_date),
+            Transaction.occurred_at <= as_utc(end_date),
         )
-        return list(self.db.execute(stmt).all())
+        local_timezone = ZoneInfo(timezone_name)
+        buckets: dict[str, list[Decimal]] = defaultdict(lambda: [Decimal("0"), Decimal("0")])
+        for occurred_at, transaction_type, amount in self.db.execute(stmt).all():
+            bucket = _timeseries_bucket_label(
+                as_utc(occurred_at).astimezone(local_timezone), granularity
+            )
+            index = 0 if transaction_type == TransactionType.INCOME else 1
+            buckets[bucket][index] += Decimal(amount)
+
+        return [
+            (bucket, values[0].quantize(Decimal("0.01")), values[1].quantize(Decimal("0.01")))
+            for bucket, values in sorted(buckets.items())
+        ]
+
+
+def _timeseries_bucket_label(local_datetime: datetime, granularity: TimeseriesGranularity) -> str:
+    local_date = local_datetime.date()
+    if granularity == "day":
+        bucket_date = local_date
+    elif granularity == "week":
+        bucket_date = local_date - timedelta(days=local_date.weekday())
+    elif granularity == "month":
+        bucket_date = local_date.replace(day=1)
+    else:
+        raise ValueError(f"unsupported timeseries granularity: {granularity}")
+    return bucket_date.isoformat()

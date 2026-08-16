@@ -7,6 +7,7 @@ Create Date: 2026-08-12
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 
 revision = "004_create_import_batches"
@@ -26,7 +27,7 @@ def upgrade() -> None:
         sa.Column("mapping_version", sa.String(length=20), nullable=False, server_default="v1"),
         sa.Column("parser_version", sa.String(length=20), nullable=False, server_default="v1"),
         sa.Column("currency_assumption", sa.String(length=3), nullable=False, server_default="ARS"),
-        sa.Column("status", sa.Enum("PENDING", "VALIDATED", "CONFIRMED", "FAILED", name="import_status_enum", create_type=False), nullable=False),
+        sa.Column("status", postgresql.ENUM("PENDING", "VALIDATED", "CONFIRMED", "FAILED", name="import_status_enum", create_type=False), nullable=False),
         sa.Column("records_total", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("records_valid", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("records_invalid", sa.Integer(), nullable=False, server_default="0"),
