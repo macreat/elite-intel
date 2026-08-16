@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.models.category import Category
 from app.models.enums import ImportRowStatus, ImportStatus, TransactionSource, TransactionType
 from app.models.import_batch import ImportBatch, ImportRow
 from app.models.product import Product
@@ -55,18 +56,36 @@ TYPE_ALIASES = {
     "expense": TransactionType.EXPENSE,
 }
 
-CSV_ONLY_ERROR_MESSAGE = "CSV-only import: upload a .csv file"
-ALLOWED_CSV_EXTENSIONS = {".csv"}
-ALLOWED_CSV_CONTENT_TYPES = {
+CSV_ONLY_ERROR_MESSAGE = "CSV/XLSX import: upload a .csv or .xlsx file"
+ALLOWED_IMPORT_EXTENSIONS = {".csv", ".xlsx", ".xls"}
+ALLOWED_IMPORT_CONTENT_TYPES = {
     "text/csv",
     "application/csv",
     "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
     "text/plain",
 }
 DOT_GROUPING_LOCALES = {"es_ar"}
 AMOUNT_TEXT_PATTERN = re.compile(r"^[+-]?\d[\d.,]*$")
 AMOUNT_QUANTUM = Decimal("0.01")
 MAX_AMOUNT_FRACTIONAL_DIGITS = 2
+KARDEX_CATEGORY_ALIASES = {
+    "ahorro mensual": "Otros",
+    "ahorro pagar": "Otros",
+    "be movil": "Otros",
+    "tigo": "Otros",
+    "fotocopias": "Fotocopias",
+    "impresiones": "Impresiones",
+    "scaner": "Escaneo",
+    "papeleria": "Papelería",
+    "papelería": "Papelería",
+    "accesorios": "Accesorios",
+    "internet": "Internet",
+    "salida": "Otros",
+    "pendientes": "Otros",
+    "total": "Otros",
+}
 
 
 def _canonical_utc_timestamp(value: datetime) -> str:
@@ -80,16 +99,23 @@ def _source_fingerprint(content_hash: str, source_row_number: int) -> str:
     return hashlib.sha256(source_identity.encode("utf-8")).hexdigest()
 
 
-def _is_allowed_csv_extension(suffix: str) -> bool:
-    return suffix in ALLOWED_CSV_EXTENSIONS
+def _is_allowed_import_extension(suffix: str) -> bool:
+    return suffix in ALLOWED_IMPORT_EXTENSIONS
 
 
 def _normalize_upload_content_type(content_type: str | None) -> str:
     return (content_type or "").lower().strip()
 
 
-def _is_allowed_csv_content_type(content_type: str) -> bool:
-    return not content_type or content_type in ALLOWED_CSV_CONTENT_TYPES
+def _is_allowed_import_content_type(content_type: str) -> bool:
+    return not content_type or content_type in ALLOWED_IMPORT_CONTENT_TYPES
+
+
+def _normalize_label(value: str) -> str:
+    normalized = value.strip().lower()
+    normalized = re.sub(r"[\u0300-\u036f]", "", normalized)
+    normalized = re.sub(r"[^a-z0-9]+", " ", normalized)
+    return " ".join(normalized.split())
 
 
 def _clean_import_value(value) -> str:
@@ -114,7 +140,7 @@ class ImportService:
             raise ValidationDomainError("file too large")
 
         suffix = Path(file.filename or "import.csv").suffix.lower() or ".csv"
-        self._validate_csv_upload(file=file, suffix=suffix)
+        self._validate_import_upload(file=file, suffix=suffix)
 
         content_hash = hashlib.sha256(content).hexdigest()
         if self.repo.hash_exists(content_hash):
@@ -123,7 +149,7 @@ class ImportService:
         storage_path = settings.IMPORT_STORAGE_DIR / f"{content_hash}{suffix}"
         storage_path.write_bytes(content)
 
-        source_type = "CSV"
+        source_type = "CSV" if suffix in {".csv"} else "EXCEL"
 
         columns = self._detect_columns(storage_path, source_type)
         mapping = self._suggest_mapping(columns)
@@ -147,12 +173,12 @@ class ImportService:
             suggested_mapping=mapping,
         )
 
-    def _validate_csv_upload(self, file: UploadFile, suffix: str) -> None:
-        if not _is_allowed_csv_extension(suffix):
+    def _validate_import_upload(self, file: UploadFile, suffix: str) -> None:
+        if not _is_allowed_import_extension(suffix):
             raise ValidationDomainError(CSV_ONLY_ERROR_MESSAGE)
 
         content_type = _normalize_upload_content_type(file.content_type)
-        if not _is_allowed_csv_content_type(content_type):
+        if not _is_allowed_import_content_type(content_type):
             raise ValidationDomainError(CSV_ONLY_ERROR_MESSAGE)
 
     def apply_mapping(self, batch_id: int, request: ImportMappingRequest) -> ImportMappingResponse:
@@ -310,33 +336,166 @@ class ImportService:
 
     def _detect_columns(self, path: Path, source_type: str) -> list[str]:
         if source_type == "CSV":
-            for encoding in ("utf-8", "cp1252"):
-                try:
-                    with path.open("r", encoding=encoding, newline="") as f:
-                        reader = csv.reader(f)
-                        return next(reader)
-                except UnicodeDecodeError:
-                    continue
-            raise ValidationDomainError("unable to decode CSV file")
-        frame = pd.read_excel(path)
+            return self._detect_csv_columns(path)
+        try:
+            frame = pd.read_excel(path)
+        except (TypeError, ValueError):
+            return self._detect_csv_columns(path)
         return [str(c) for c in frame.columns]
+
+    def _detect_csv_columns(self, path: Path) -> list[str]:
+        for encoding in ("utf-8", "cp1252"):
+            try:
+                with path.open("r", encoding=encoding, newline="") as f:
+                    reader = csv.reader(f)
+                    rows = list(reader)
+                if self._looks_like_kardex(rows):
+                    return ["Fecha", "Tipo", "Categoría", "Descripción", "Valor"]
+                return rows[0] if rows else []
+            except UnicodeDecodeError:
+                continue
+        raise ValidationDomainError("unable to decode CSV file")
 
     def _read_rows(self, path: Path, source_type: str) -> list[dict]:
         if source_type == "CSV":
-            content = None
-            for encoding in ("utf-8", "cp1252"):
-                try:
-                    content = path.read_text(encoding=encoding)
-                    break
-                except UnicodeDecodeError:
-                    continue
-            if content is None:
-                raise ValidationDomainError("unable to decode CSV file")
-            reader = csv.DictReader(io.StringIO(content))
-            return [dict(row) for row in reader]
-        frame = pd.read_excel(path)
+            return self._read_csv_rows(path)
+        try:
+            frame = pd.read_excel(path)
+        except (TypeError, ValueError):
+            return self._read_csv_rows(path)
         frame = frame.fillna("")
+        if self._looks_like_kardex_frame(frame):
+            return self._read_kardex_rows(frame.to_numpy().tolist())
         return frame.to_dict(orient="records")
+
+    def _read_csv_rows(self, path: Path) -> list[dict]:
+        content = None
+        for encoding in ("utf-8", "cp1252"):
+            try:
+                content = path.read_text(encoding=encoding)
+                break
+            except UnicodeDecodeError:
+                continue
+        if content is None:
+            raise ValidationDomainError("unable to decode CSV file")
+        rows = list(csv.reader(io.StringIO(content)))
+        if self._looks_like_kardex(rows):
+            return self._read_kardex_rows(rows)
+        reader = csv.DictReader(io.StringIO(content))
+        return [dict(row) for row in reader]
+
+    def _looks_like_kardex(self, rows: list[list[str]]) -> bool:
+        if not rows:
+            return False
+        flattened = [cell.strip().lower() for row in rows for cell in row if cell and cell.strip()]
+        return any("ahorro mensual" in cell for cell in flattened) and any("be movil" in cell for cell in flattened)
+
+    def _looks_like_kardex_frame(self, frame: pd.DataFrame) -> bool:
+        flattened = [str(value).strip().lower() for value in frame.to_numpy().flatten() if value is not None and str(value).strip()]
+        return any("ahorro mensual" in value for value in flattened) and any("be movil" in value for value in flattened)
+
+    def _read_kardex_rows(self, rows) -> list[dict]:
+        entries: list[dict] = []
+        current_date = None
+        current_header: list[str] = []
+
+        for row in rows:
+            if row is None:
+                continue
+            cells = [str(cell).strip() for cell in row]
+            if not any(cells):
+                continue
+            if any(self._looks_like_date(cell) for cell in cells[:2]):
+                current_date = next((cell for cell in cells if self._looks_like_date(cell)), None)
+                continue
+            if not current_date:
+                continue
+            if not current_header and any("ahorro mensual" in _normalize_label(cell) for cell in cells):
+                current_header = cells
+                continue
+            if not current_header or len(cells) < len(current_header):
+                continue
+
+            for index, header in enumerate(current_header):
+                if index >= len(cells):
+                    continue
+                raw_value = cells[index]
+                if raw_value == "" or _normalize_label(header) in {"pendientes", "total", "salida"}:
+                    continue
+                if _normalize_label(header) in {"ahorro mensual", "ahorro pagar"} and raw_value.lower() in {"nan", "none"}:
+                    continue
+                if _normalize_label(header) not in {"ahorro mensual", "be movil", "tigo", "fotocopias", "impresiones", "scaner", "papeleria", "papelería", "accesorios", "internet", "ahorro pagar", "salida", "pendientes", "total"}:
+                    continue
+                amount = self._parse_amount(raw_value)
+                if amount is None:
+                    continue
+                label = KARDEX_CATEGORY_ALIASES.get(_normalize_label(header), header or "Otros")
+                tx_type = self._infer_kardex_type(label, amount)
+                description_label = (header or label).strip() or "Otros"
+                description = f"{description_label} - {current_date}"
+                entries.append(
+                    {
+                        "Fecha": self._format_kardex_date(current_date),
+                        "Tipo": tx_type.value,
+                        "Categoría": label,
+                        "Descripción": description,
+                        "Valor": str(amount),
+                    }
+                )
+
+        return entries
+
+    def _infer_kardex_type(self, label: str, amount: Decimal) -> TransactionType:
+        normalized = _normalize_label(label)
+        if normalized in {"ahorro mensual", "ahorro pagar", "be movil", "tigo", "internet", "accesorios"}:
+            return TransactionType.INCOME if amount > 0 else TransactionType.EXPENSE
+        if normalized in {"fotocopias", "impresiones", "scaner", "papeleria", "salida"}:
+            return TransactionType.EXPENSE
+        return TransactionType.INCOME if amount > 0 else TransactionType.EXPENSE
+
+    def _looks_like_date(self, value: str) -> bool:
+        text = (value or "").strip()
+        if not text or re.fullmatch(r"\d+", text):
+            return False
+        if "/" in text or "-" in text:
+            try:
+                date_parser.parse(text, dayfirst=True)
+                return True
+            except (TypeError, ValueError):
+                return False
+        return False
+
+    def _format_kardex_date(self, value: str) -> str:
+        parsed = date_parser.parse(value, dayfirst=True)
+        return parsed.strftime("%d/%m/%Y")
+
+    def _parse_amount(self, raw: str) -> Decimal | None:
+        if raw is None:
+            return None
+        text = str(raw).strip()
+        if not text or text.lower() in {"nan", "none", "null"}:
+            return None
+        match = re.search(r"[-+]?\d[\d.\s,]*\d", text)
+        if not match:
+            return None
+        candidate = match.group(0).replace(" ", "")
+        if "," in candidate and "." in candidate:
+            if candidate.rfind(",") > candidate.rfind("."):
+                candidate = candidate.replace(".", "").replace(",", ".")
+            else:
+                candidate = candidate.replace(",", "")
+        elif "," in candidate:
+            if candidate.count(",") > 1 and len(candidate.split(",")[-1]) == 3:
+                candidate = candidate.replace(",", "")
+            else:
+                candidate = candidate.replace(",", ".")
+        try:
+            value = Decimal(candidate)
+        except InvalidOperation:
+            return None
+        if value <= 0:
+            return value
+        return value.quantize(AMOUNT_QUANTUM)
 
     def _suggest_mapping(self, columns: list[str]) -> dict[str, str]:
         mapping: dict[str, str] = {}
@@ -347,7 +506,35 @@ class ImportService:
                 if key in normalized:
                     mapping[canonical] = normalized[key]
                     break
+        if not mapping and columns == ["Fecha", "Tipo", "Categoría", "Descripción", "Valor"]:
+            mapping = {
+                "occurred_at": "Fecha",
+                "transaction_type": "Tipo",
+                "category": "Categoría",
+                "description": "Descripción",
+                "amount": "Valor",
+            }
         return mapping
+
+    def _ensure_category_exists(self, category_name: str, transaction_type: TransactionType) -> str:
+        name = (category_name or "Otros").strip()
+        if not name:
+            name = "Otros"
+        normalized = _normalize_label(name)
+        alias = KARDEX_CATEGORY_ALIASES.get(normalized, name)
+        if not alias:
+            alias = "Otros"
+
+        existing = self.db.query(Category).filter(Category.name == alias, Category.type == transaction_type).first()
+        if existing is not None:
+            self.categories = CategoryRepository(self.db)
+            return alias
+
+        category = Category(name=alias, type=transaction_type, active=True)
+        self.db.add(category)
+        self.db.flush()
+        self.categories = CategoryRepository(self.db)
+        return alias
 
     def _category_index(self) -> dict[tuple[str, TransactionType], int]:
         result = {}
@@ -463,11 +650,16 @@ class ImportService:
             category_key = (category_raw.lower(), tx_type)
             category_id = category_index.get(category_key)
             if category_id is None:
-                return {
-                    "ok": False,
-                    "error_code": "UNKNOWN_CATEGORY",
-                    "message": "Unknown or type-incompatible category",
-                }
+                fallback_name = self._ensure_category_exists(category_raw, tx_type)
+                fallback_category = self.db.query(Category).filter(Category.name == fallback_name, Category.type == tx_type).first()
+                category_id = fallback_category.id if fallback_category else None
+                if category_id is None:
+                    return {
+                        "ok": False,
+                        "error_code": "UNKNOWN_CATEGORY",
+                        "message": "Unknown or type-incompatible category",
+                    }
+                category_index[(fallback_name.lower(), tx_type)] = category_id
 
             occurred_at = self._parse_date(date_raw)
             amount = self._parse_amount(amount_raw)
