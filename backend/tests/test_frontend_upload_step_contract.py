@@ -67,13 +67,13 @@ def _open_import_page(browser, frontend_url: str) -> Page:
     return page
 
 
-def test_upload_step_renders_csv_only_picker_and_copy(browser, frontend_url):
+def test_upload_step_renders_csv_xlsx_picker_and_copy(browser, frontend_url):
     page = _open_import_page(browser, frontend_url)
 
-    expect(page.get_by_role("heading", name="1) Upload CSV file")).to_be_visible()
-    expect(page.get_by_text("Select a CSV file to start the import flow.")).to_be_visible()
-    expect(page.locator('input[type="file"]')).to_have_attribute("accept", ".csv")
-    expect(page.locator("body")).not_to_contain_text("Excel")
+    expect(page.get_by_role("heading", name="1) Upload CSV or XLSX file")).to_be_visible()
+    expect(page.get_by_text("Select a CSV or Excel (XLSX) file to start the import flow.")).to_be_visible()
+    expect(page.get_by_text("Large Kardex/cuadernillo CSVs up to 250MB are supported.")).to_be_visible()
+    expect(page.locator('input[type="file"]')).to_have_attribute("accept", ".csv,.xlsx")
 
     page.close()
 

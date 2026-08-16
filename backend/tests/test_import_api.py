@@ -110,6 +110,60 @@ Ahorro mensual,Be Movil 700,Tigo 720,Fotocopias,Impresiones,Scaner,Papeleria,Acc
     assert payload["preview"][0]["description"].startswith("Ahorro mensual")
 
 
+def test_import_parses_sparse_wide_kardex_rows(client):
+    _seed_categories(client)
+
+    wide_pad = "," * 16370
+    content = (
+        f"10/31/2025{wide_pad}\n"
+        f"Ahorro mensual,Be Movil 700,Tigo 720,Fotocopias,Impresiones,Scaner,Papeleria,Accesorios,Internet,Ahorro pagar,salida,Pendientes,Total{wide_pad}\n"
+        f"700000,4500,5000,1300,1600,500,4000,,2000,,,31000{wide_pad}\n"
+        f",8500,,6200,3200,,5500,,8700,,,,30000{wide_pad}\n"
+    ).encode("utf-8")
+
+    upload = client.post(
+        "/api/v1/imports/transactions",
+        files={"file": ("kardex-wide.csv", content, "text/csv")},
+    )
+    assert upload.status_code == 201
+    assert upload.json()["columns_detected"] == ["Fecha", "Tipo", "Categoría", "Descripción", "Valor"]
+
+    batch_id = upload.json()["batch_id"]
+    mapping = client.post(
+        f"/api/v1/imports/{batch_id}/mapping",
+        json={
+            "mapping": {
+                "occurred_at": "Fecha",
+                "transaction_type": "Tipo",
+                "category": "Categoría",
+                "description": "Descripción",
+                "amount": "Valor",
+            }
+        },
+    )
+    assert mapping.status_code == 200
+    payload = mapping.json()
+    assert payload["summary"]["records_total"] >= 12
+    assert payload["summary"]["records_valid"] >= 12
+
+
+def test_import_rejects_file_larger_than_configured_max(client, monkeypatch):
+    from app.core import config as config_module
+
+    monkeypatch.setattr(config_module.settings, "IMPORT_MAX_FILE_SIZE_MB", 1)
+    _seed_categories(client)
+
+    oversized = b"x" * ((1 * 1024 * 1024) + 1)
+    upload = client.post(
+        "/api/v1/imports/transactions",
+        files={"file": ("too-large.csv", oversized, "text/csv")},
+    )
+    assert upload.status_code == 400
+    body = upload.json()
+    assert body["error_code"] == "VALIDATION_ERROR"
+    assert "file too large" in body["message"].lower()
+
+
 def test_import_rejects_csv_extension_with_non_csv_content_type(client):
     _seed_categories(client)
 

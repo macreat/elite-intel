@@ -1,6 +1,5 @@
 import csv
 import hashlib
-import io
 import json
 import re
 from datetime import datetime, timezone
@@ -86,6 +85,10 @@ KARDEX_CATEGORY_ALIASES = {
     "pendientes": "Otros",
     "total": "Otros",
 }
+KARDEX_HEADER_KEYS = frozenset(KARDEX_CATEGORY_ALIASES.keys())
+KARDEX_SKIP_HEADERS = frozenset({"pendientes", "total", "salida"})
+KARDEX_COLUMN_CAP = 32
+CSV_TEXT_ENCODINGS = ("utf-8", "cp1252")
 
 
 def _canonical_utc_timestamp(value: datetime) -> str:
@@ -126,6 +129,27 @@ def _normalize_header(header: str) -> str:
     return re.sub(r"\s+", " ", header.strip().lower())
 
 
+def _trim_csv_row(row) -> list[str]:
+    cells = ["" if cell is None else str(cell).strip() for cell in row]
+    while cells and cells[-1] == "":
+        cells.pop()
+    if len(cells) > KARDEX_COLUMN_CAP:
+        cells = cells[:KARDEX_COLUMN_CAP]
+    return cells
+
+
+def _match_kardex_header(header: str) -> str | None:
+    normalized = _normalize_label(header)
+    if not normalized:
+        return None
+    if normalized in KARDEX_HEADER_KEYS:
+        return normalized
+    for key in KARDEX_HEADER_KEYS:
+        if normalized.startswith(f"{key} "):
+            return key
+    return None
+
+
 class ImportService:
     def __init__(self, db: Session):
         self.db = db
@@ -133,6 +157,7 @@ class ImportService:
         self.categories = CategoryRepository(db)
         self.transactions = TransactionService(db)
         settings.IMPORT_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+        self._csv_encoding_cache: dict[str, str] = {}
 
     async def upload_transactions(self, file: UploadFile) -> ImportUploadResponse:
         content = await file.read()
@@ -341,20 +366,39 @@ class ImportService:
             frame = pd.read_excel(path)
         except (TypeError, ValueError):
             return self._detect_csv_columns(path)
+        trimmed_preview = [_trim_csv_row(row) for row in frame.head(50).fillna("").to_numpy().tolist()]
+        if self._looks_like_kardex(trimmed_preview):
+            return ["Fecha", "Tipo", "Categoría", "Descripción", "Valor"]
         return [str(c) for c in frame.columns]
 
-    def _detect_csv_columns(self, path: Path) -> list[str]:
-        for encoding in ("utf-8", "cp1252"):
+    def _resolve_csv_encoding(self, path: Path) -> str:
+        cache_key = str(path.resolve())
+        cached = self._csv_encoding_cache.get(cache_key)
+        if cached:
+            return cached
+        for encoding in CSV_TEXT_ENCODINGS:
             try:
-                with path.open("r", encoding=encoding, newline="") as f:
-                    reader = csv.reader(f)
-                    rows = list(reader)
-                if self._looks_like_kardex(rows):
-                    return ["Fecha", "Tipo", "Categoría", "Descripción", "Valor"]
-                return rows[0] if rows else []
+                with path.open("r", encoding=encoding, newline="") as handle:
+                    for _ in handle:
+                        pass
+                self._csv_encoding_cache[cache_key] = encoding
+                return encoding
             except UnicodeDecodeError:
                 continue
         raise ValidationDomainError("unable to decode CSV file")
+
+    def _iter_trimmed_csv_rows(self, path: Path):
+        encoding = self._resolve_csv_encoding(path)
+        with path.open("r", encoding=encoding, newline="") as handle:
+            for row in csv.reader(handle):
+                yield _trim_csv_row(row)
+
+    def _detect_csv_columns(self, path: Path) -> list[str]:
+        if self._csv_path_looks_like_kardex(path):
+            return ["Fecha", "Tipo", "Categoría", "Descripción", "Valor"]
+        for row in self._iter_trimmed_csv_rows(path):
+            return row
+        return []
 
     def _read_rows(self, path: Path, source_type: str) -> list[dict]:
         if source_type == "CSV":
@@ -364,35 +408,60 @@ class ImportService:
         except (TypeError, ValueError):
             return self._read_csv_rows(path)
         frame = frame.fillna("")
-        if self._looks_like_kardex_frame(frame):
-            return self._read_kardex_rows(frame.to_numpy().tolist())
+        trimmed_rows = [_trim_csv_row(row) for row in frame.to_numpy().tolist()]
+        if self._looks_like_kardex(trimmed_rows):
+            return self._read_kardex_rows(trimmed_rows)
         return frame.to_dict(orient="records")
 
     def _read_csv_rows(self, path: Path) -> list[dict]:
-        content = None
-        for encoding in ("utf-8", "cp1252"):
-            try:
-                content = path.read_text(encoding=encoding)
-                break
-            except UnicodeDecodeError:
-                continue
-        if content is None:
-            raise ValidationDomainError("unable to decode CSV file")
-        rows = list(csv.reader(io.StringIO(content)))
-        if self._looks_like_kardex(rows):
-            return self._read_kardex_rows(rows)
-        reader = csv.DictReader(io.StringIO(content))
-        return [dict(row) for row in reader]
+        if self._csv_path_looks_like_kardex(path):
+            return self._read_kardex_rows(self._iter_trimmed_csv_rows(path))
+
+        encoding = self._resolve_csv_encoding(path)
+        with path.open("r", encoding=encoding, newline="") as handle:
+            reader = csv.DictReader(handle)
+            if reader.fieldnames is None:
+                return []
+            fieldnames = _trim_csv_row(reader.fieldnames)
+            records: list[dict] = []
+            for raw in reader:
+                record = {
+                    name: _clean_import_value(raw.get(name, ""))
+                    for name in fieldnames
+                    if name
+                }
+                if any(record.values()):
+                    records.append(record)
+            return records
+
+    def _csv_path_looks_like_kardex(self, path: Path) -> bool:
+        seen_ahorro = False
+        seen_be_movil = False
+        try:
+            for row in self._iter_trimmed_csv_rows(path):
+                for cell in row:
+                    label = _normalize_label(cell)
+                    if "ahorro mensual" in label:
+                        seen_ahorro = True
+                    if "be movil" in label:
+                        seen_be_movil = True
+                    if seen_ahorro and seen_be_movil:
+                        return True
+        except UnicodeDecodeError as exc:
+            raise ValidationDomainError("unable to decode CSV file") from exc
+        return False
 
     def _looks_like_kardex(self, rows: list[list[str]]) -> bool:
         if not rows:
             return False
-        flattened = [cell.strip().lower() for row in rows for cell in row if cell and cell.strip()]
-        return any("ahorro mensual" in cell for cell in flattened) and any("be movil" in cell for cell in flattened)
+        flattened = [cell for row in rows for cell in row if cell]
+        seen_ahorro = any("ahorro mensual" in _normalize_label(cell) for cell in flattened)
+        seen_be_movil = any("be movil" in _normalize_label(cell) for cell in flattened)
+        return seen_ahorro and seen_be_movil
 
     def _looks_like_kardex_frame(self, frame: pd.DataFrame) -> bool:
-        flattened = [str(value).strip().lower() for value in frame.to_numpy().flatten() if value is not None and str(value).strip()]
-        return any("ahorro mensual" in value for value in flattened) and any("be movil" in value for value in flattened)
+        trimmed_rows = [_trim_csv_row(row) for row in frame.fillna("").to_numpy().tolist()]
+        return self._looks_like_kardex(trimmed_rows)
 
     def _read_kardex_rows(self, rows) -> list[dict]:
         entries: list[dict] = []
@@ -402,7 +471,7 @@ class ImportService:
         for row in rows:
             if row is None:
                 continue
-            cells = [str(cell).strip() for cell in row]
+            cells = _trim_csv_row(row)
             if not any(cells):
                 continue
             if any(self._looks_like_date(cell) for cell in cells[:2]):
@@ -410,27 +479,28 @@ class ImportService:
                 continue
             if not current_date:
                 continue
-            if not current_header and any("ahorro mensual" in _normalize_label(cell) for cell in cells):
+            if not current_header and any(_match_kardex_header(cell) == "ahorro mensual" for cell in cells):
                 current_header = cells
                 continue
-            if not current_header or len(cells) < len(current_header):
+            if not current_header:
                 continue
 
             for index, header in enumerate(current_header):
                 if index >= len(cells):
+                    break
+                header_key = _match_kardex_header(header)
+                if header_key is None or header_key in KARDEX_SKIP_HEADERS:
                     continue
                 raw_value = cells[index]
-                if raw_value == "" or _normalize_label(header) in {"pendientes", "total", "salida"}:
+                if raw_value == "":
                     continue
-                if _normalize_label(header) in {"ahorro mensual", "ahorro pagar"} and raw_value.lower() in {"nan", "none"}:
+                if header_key in {"ahorro mensual", "ahorro pagar"} and raw_value.lower() in {"nan", "none"}:
                     continue
-                if _normalize_label(header) not in {"ahorro mensual", "be movil", "tigo", "fotocopias", "impresiones", "scaner", "papeleria", "papelería", "accesorios", "internet", "ahorro pagar", "salida", "pendientes", "total"}:
+                amount = self._parse_kardex_amount(raw_value)
+                if amount is None or amount == 0:
                     continue
-                amount = self._parse_amount(raw_value)
-                if amount is None:
-                    continue
-                label = KARDEX_CATEGORY_ALIASES.get(_normalize_label(header), header or "Otros")
-                tx_type = self._infer_kardex_type(label, amount)
+                label = KARDEX_CATEGORY_ALIASES.get(header_key, header or "Otros")
+                tx_type = self._infer_kardex_type(header_key, amount)
                 description_label = (header or label).strip() or "Otros"
                 description = f"{description_label} - {current_date}"
                 entries.append(
@@ -439,7 +509,7 @@ class ImportService:
                         "Tipo": tx_type.value,
                         "Categoría": label,
                         "Descripción": description,
-                        "Valor": str(amount),
+                        "Valor": str(abs(amount)),
                     }
                 )
 
@@ -459,23 +529,30 @@ class ImportService:
             return False
         if "/" in text or "-" in text:
             try:
-                date_parser.parse(text, dayfirst=True)
+                date_parser.parse(text, dayfirst=False, yearfirst=False)
                 return True
             except (TypeError, ValueError):
-                return False
+                try:
+                    date_parser.parse(text, dayfirst=True)
+                    return True
+                except (TypeError, ValueError):
+                    return False
         return False
 
     def _format_kardex_date(self, value: str) -> str:
-        parsed = date_parser.parse(value, dayfirst=True)
+        try:
+            parsed = date_parser.parse(value, dayfirst=False, yearfirst=False)
+        except (TypeError, ValueError):
+            parsed = date_parser.parse(value, dayfirst=True)
         return parsed.strftime("%d/%m/%Y")
 
-    def _parse_amount(self, raw: str) -> Decimal | None:
+    def _parse_kardex_amount(self, raw: str) -> Decimal | None:
         if raw is None:
             return None
         text = str(raw).strip()
         if not text or text.lower() in {"nan", "none", "null"}:
             return None
-        match = re.search(r"[-+]?\d[\d.\s,]*\d", text)
+        match = re.search(r"[-+]?\d[\d.\s,]*\d|[-+]?\d", text)
         if not match:
             return None
         candidate = match.group(0).replace(" ", "")
@@ -493,7 +570,7 @@ class ImportService:
             value = Decimal(candidate)
         except InvalidOperation:
             return None
-        if value <= 0:
+        if value == 0:
             return value
         return value.quantize(AMOUNT_QUANTUM)
 
