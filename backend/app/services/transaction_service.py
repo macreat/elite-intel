@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -53,6 +53,7 @@ class TransactionService:
         import_batch_id=None,
         source_row_number=None,
         record_fingerprint=None,
+        source_fingerprint=None,
         auto_commit: bool = True,
     ):
         category = self.categories.get(payload.category_id)
@@ -63,7 +64,7 @@ class TransactionService:
         validate_positive_amount(Decimal(payload.amount))
 
         model = Transaction(
-            occurred_at=payload.occurred_at,
+            occurred_at=self._as_utc(payload.occurred_at),
             transaction_type=payload.transaction_type,
             category_id=payload.category_id,
             description=payload.description.strip(),
@@ -74,6 +75,7 @@ class TransactionService:
             import_batch_id=import_batch_id,
             source_row_number=source_row_number,
             record_fingerprint=record_fingerprint,
+            source_fingerprint=source_fingerprint,
         )
         created = self.repo.create(model)
         if auto_commit:
@@ -94,7 +96,7 @@ class TransactionService:
             validate_positive_amount(Decimal(payload.amount))
 
         if "occurred_at" in payload.model_fields_set:
-            model.occurred_at = payload.occurred_at
+            model.occurred_at = self._as_utc(payload.occurred_at)
         if "transaction_type" in payload.model_fields_set:
             model.transaction_type = payload.transaction_type
         if "category_id" in payload.model_fields_set:
@@ -116,3 +118,11 @@ class TransactionService:
         model = self.get(transaction_id)
         self.repo.delete(model)
         self.db.commit()
+
+    @staticmethod
+    def _as_utc(value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)

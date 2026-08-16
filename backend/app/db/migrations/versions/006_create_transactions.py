@@ -7,6 +7,7 @@ Create Date: 2026-08-12
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 
 revision = "006_create_transactions"
@@ -21,7 +22,7 @@ def upgrade() -> None:
         sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("source_date_raw", sa.String(length=50), nullable=True),
-        sa.Column("transaction_type", sa.Enum("INCOME", "EXPENSE", name="transaction_type_enum", create_type=False), nullable=False),
+        sa.Column("transaction_type", postgresql.ENUM("INCOME", "EXPENSE", name="transaction_type_enum", create_type=False), nullable=False),
         sa.Column("category_id", sa.BigInteger(), sa.ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False),
         sa.Column("category_name_raw", sa.String(length=150), nullable=True),
         sa.Column("description", sa.String(length=255), nullable=False),
@@ -29,7 +30,7 @@ def upgrade() -> None:
         sa.Column("currency_code", sa.String(length=3), nullable=False, server_default="ARS"),
         sa.Column("product_id", sa.BigInteger(), sa.ForeignKey("products.id", ondelete="RESTRICT"), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("source_type", sa.Enum("MANUAL", "CSV", "EXCEL", name="transaction_source_enum", create_type=False), nullable=False, server_default="MANUAL"),
+        sa.Column("source_type", postgresql.ENUM("MANUAL", "CSV", "EXCEL", name="transaction_source_enum", create_type=False), nullable=False, server_default="MANUAL"),
         sa.Column("import_batch_id", sa.BigInteger(), sa.ForeignKey("import_batches.id"), nullable=True),
         sa.Column("source_row_number", sa.Integer(), nullable=True),
         sa.Column("record_fingerprint", sa.CHAR(length=64), nullable=True),

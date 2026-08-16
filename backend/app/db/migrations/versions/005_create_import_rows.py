@@ -7,6 +7,7 @@ Create Date: 2026-08-12
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 
 revision = "005_create_import_rows"
@@ -26,7 +27,7 @@ def upgrade() -> None:
         sa.Column("record_fingerprint", sa.CHAR(length=64), nullable=True),
         sa.Column(
             "status",
-            sa.Enum("VALID", "INVALID", "DUPLICATE", "SUSPICIOUS", "INSERTED", name="import_row_status_enum", create_type=False),
+            postgresql.ENUM("VALID", "INVALID", "DUPLICATE", "SUSPICIOUS", "INSERTED", name="import_row_status_enum", create_type=False),
             nullable=False,
         ),
         sa.Column("error_code", sa.String(length=50), nullable=True),

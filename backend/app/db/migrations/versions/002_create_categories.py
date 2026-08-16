@@ -7,6 +7,7 @@ Create Date: 2026-08-12
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 
 revision = "002_create_categories"
@@ -20,7 +21,7 @@ def upgrade() -> None:
         "categories",
         sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column("name", sa.String(length=100), nullable=False),
-        sa.Column("type", sa.Enum("INCOME", "EXPENSE", name="transaction_type_enum", create_type=False), nullable=False),
+        sa.Column("type", postgresql.ENUM("INCOME", "EXPENSE", name="transaction_type_enum", create_type=False), nullable=False),
         sa.Column("description", sa.String(length=255), nullable=True),
         sa.Column("active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
