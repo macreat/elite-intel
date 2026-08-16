@@ -65,3 +65,6 @@ ml/models/*.joblib
 
 # Zone Identifiers (Windows)
 *:Zone.Identifier
+
+# SDD / skill registry cache
+.atl/
