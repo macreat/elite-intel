@@ -1,0 +1,66 @@
+schema: spec-driven
+
+context: |
+  Tech stack: FastAPI + SQLAlchemy + Alembic + Postgres (backend); React + Vite + TypeScript + Tailwind (frontend).
+  Architecture: REST API backend (backend/app) with pytest test suite; SPA frontend (frontend/src) via React Router.
+  Testing: pytest (backend, no coverage plugin installed); no frontend test runner configured (npm run build / tsc for typecheck).
+  Style: no linter/formatter config detected for backend or frontend; follow existing code conventions in each module.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    guidelines:
+      - Follow existing code patterns in backend/app and frontend/src
+      - Preserve existing SPEC.md, tasks/, backend/, frontend/ structure
+    tdd: true
+    test_command: "cd backend && pytest"
+  verify:
+    test_command: "cd backend && pytest"
+    build_command: "cd frontend && npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: true
+  detected: "2026-08-12"
+  backend:
+    runner: pytest
+    command: "cd backend && pytest"
+    layers:
+      unit: true
+      integration: true
+      e2e: false
+    coverage:
+      available: false
+      command: ""
+  frontend:
+    runner: none
+    command: ""
+    layers:
+      unit: false
+      integration: false
+      e2e: false
+    coverage:
+      available: false
+      command: ""
+    build_check:
+      available: true
+      command: "cd frontend && npm run build"
+    type_check:
+      available: true
+      command: "cd frontend && npx tsc --noEmit"
+  quality_tools:
+    linter: none
+    type_checker: "tsc (frontend only)"
+    formatter: none
