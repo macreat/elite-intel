@@ -1,4 +1,4 @@
-import { BarChart3, FileUp, Home, PlusCircle, ReceiptText } from 'lucide-react'
+import { FileUp, Home, PlusCircle, ReceiptText } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import clsx from 'clsx'
 
@@ -8,13 +8,28 @@ const navItems = [
   { to: '/import', label: 'Import', icon: FileUp },
 ]
 
+function EliteLogo() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M35 15 L60 5 L80 20 L80 45 L60 55 L35 45 Z" stroke="#00d4aa" strokeWidth="4" fill="none" />
+      <path d="M55 45 L80 35 L100 50 L100 75 L80 85 L55 75 Z" stroke="#22d3ee" strokeWidth="4" fill="none" />
+      <circle cx="52" cy="30" r="5" fill="#00d4aa" />
+      <circle cx="60" cy="50" r="6" fill="#22d3ee" />
+      <circle cx="48" cy="45" r="4" fill="#00d4aa" />
+    </svg>
+  )
+}
+
 export function Sidebar() {
   return (
     <>
-      <aside className="hidden w-64 border-r border-slate-200 bg-white p-4 md:flex md:flex-col">
-        <div className="mb-6 flex items-center gap-2 px-2">
-          <BarChart3 className="h-5 w-5 text-blue-600" />
-          <span className="text-lg font-semibold">Business Dashboard</span>
+      <aside className="hidden w-64 border-r border-white/[0.06] bg-navy-800 p-4 md:flex md:flex-col">
+        <div className="mb-8 flex items-center gap-3 px-2">
+          <EliteLogo />
+          <div>
+            <span className="text-lg font-bold tracking-wide text-white">ELITE</span>
+            <span className="ml-1.5 text-[10px] font-medium tracking-widest text-mint-500">INTEL</span>
+          </div>
         </div>
         <nav className="flex flex-col gap-1">
           {navItems.map(({ to, label, icon: Icon }) => (
@@ -23,8 +38,10 @@ export function Sidebar() {
               to={to}
               className={({ isActive }) =>
                 clsx(
-                  'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
-                  isActive ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-100',
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200',
+                  isActive
+                    ? 'bg-mint-600/10 text-mint-500 shadow-sm shadow-mint-600/5'
+                    : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200',
                 )
               }
             >
@@ -33,13 +50,13 @@ export function Sidebar() {
             </NavLink>
           ))}
         </nav>
-        <NavLink to="/transactions/new" className="btn-primary mt-6 w-full gap-2">
+        <NavLink to="/transactions/new" className="btn-primary mt-auto w-full gap-2">
           <PlusCircle className="h-4 w-4" />
           Add Transaction
         </NavLink>
       </aside>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/[0.06] bg-navy-800/95 backdrop-blur-md md:hidden">
         <div className="grid grid-cols-4">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -48,7 +65,7 @@ export function Sidebar() {
               className={({ isActive }) =>
                 clsx(
                   'flex flex-col items-center gap-1 py-2 text-[11px] font-medium',
-                  isActive ? 'text-blue-700' : 'text-slate-500',
+                  isActive ? 'text-mint-500' : 'text-slate-500',
                 )
               }
             >
@@ -61,7 +78,7 @@ export function Sidebar() {
             className={({ isActive }) =>
               clsx(
                 'flex flex-col items-center gap-1 py-2 text-[11px] font-medium',
-                isActive ? 'text-blue-700' : 'text-slate-500',
+                isActive ? 'text-mint-500' : 'text-slate-500',
               )
             }
           >
