@@ -31,6 +31,10 @@ export function Sidebar() {
             <span className="ml-1.5 text-[10px] font-medium tracking-widest text-mint-500">INTEL</span>
           </div>
         </div>
+        <NavLink to="/transactions/new" className="btn-primary mb-6 w-full gap-2">
+          <PlusCircle className="h-4 w-4" />
+          Add Transaction
+        </NavLink>
         <nav className="flex flex-col gap-1">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
@@ -50,10 +54,6 @@ export function Sidebar() {
             </NavLink>
           ))}
         </nav>
-        <NavLink to="/transactions/new" className="btn-primary mt-auto w-full gap-2">
-          <PlusCircle className="h-4 w-4" />
-          Add Transaction
-        </NavLink>
       </aside>
 
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/[0.06] bg-navy-800/95 backdrop-blur-md md:hidden">
