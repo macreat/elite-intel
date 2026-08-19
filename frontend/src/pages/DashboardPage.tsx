@@ -97,7 +97,7 @@ export function DashboardPage() {
               aria-label={metricsVisible ? 'Hide amounts' : 'Show amounts'}
               title={metricsVisible ? 'Hide amounts' : 'Show amounts'}
             >
-              {metricsVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              {metricsVisible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
             </button>
           </div>
           <p className="text-sm text-slate-400">Track income, expenses, and savings performance.</p>

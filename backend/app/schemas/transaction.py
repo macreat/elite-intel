@@ -13,6 +13,7 @@ class TransactionCreate(BaseModel):
     category_id: int
     description: str = Field(min_length=1, max_length=255)
     amount: Decimal = Field(gt=0)
+    quantity: int = Field(default=1, ge=1)
     product_id: int | None = None
     notes: str | None = Field(default=None, max_length=1000)
 
@@ -30,6 +31,7 @@ class TransactionUpdate(BaseModel):
     category_id: int | None = None
     description: str | None = Field(default=None, min_length=1, max_length=255)
     amount: Decimal | None = Field(default=None, gt=0)
+    quantity: int | None = Field(default=None, ge=1)
     product_id: int | None = None
     notes: str | None = Field(default=None, max_length=1000)
 
@@ -41,6 +43,7 @@ class TransactionRead(ORMBase):
     category_id: int
     description: str
     amount: Decimal
+    quantity: int
     product_id: int | None
     notes: str | None
     currency_code: str

@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import CHAR, CheckConstraint, DateTime, Enum, ForeignKey, Index, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import CHAR, CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -32,6 +32,7 @@ class Transaction(Base, TimestampMixin):
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, default="COP", server_default="COP")
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
     product_id: Mapped[int | None] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_type: Mapped[TransactionSource] = mapped_column(

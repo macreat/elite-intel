@@ -1,11 +1,12 @@
-import { FileUp, Home, PlusCircle, ReceiptText } from 'lucide-react'
-import { NavLink, Link } from 'react-router-dom'
+import { BookOpen, FileUp, Home, PlusCircle, ReceiptText } from 'lucide-react'
+import { Link, NavLink } from 'react-router-dom'
 import clsx from 'clsx'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: Home },
   { to: '/transactions', label: 'Transactions', icon: ReceiptText },
   { to: '/import', label: 'Import', icon: FileUp },
+  { to: '/catalog', label: 'Catalog', icon: BookOpen },
 ]
 
 function EliteLogo() {
@@ -20,10 +21,10 @@ function EliteLogo() {
   )
 }
 
-export function Sidebar() {
+export function TopBar() {
   return (
     <header className="border-b border-white/[0.06] bg-navy-800">
-      {/* ELITE INTEL — centered, big */}
+      {/* ELITE INTEL — centered, 3x big */}
       <Link
         to="/"
         className="flex items-center justify-center gap-3 py-6 transition-colors hover:bg-white/[0.03]"

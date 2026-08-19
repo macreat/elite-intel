@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from __future__ import annotations
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.product import Product
@@ -15,3 +17,24 @@ class ProductRepository:
         if active is not None:
             stmt = stmt.where(Product.active == active)
         return list(self.db.scalars(stmt.order_by(Product.name)).all())
+
+    def get(self, product_id: int) -> Product | None:
+        return self.db.get(Product, product_id)
+
+    def create(self, product: Product) -> Product:
+        self.db.add(product)
+        self.db.flush()
+        self.db.refresh(product)
+        return product
+
+    def list_catalog(
+        self, *, search: str | None = None, page: int = 1, page_size: int = 20
+    ) -> tuple[list[Product], int]:
+        stmt = select(Product)
+        if search:
+            stmt = stmt.where(Product.name.ilike(f"%{search}%"))
+        total = self.db.scalar(select(func.count()).select_from(stmt.subquery()))
+        items = list(
+            self.db.scalars(stmt.order_by(Product.name).offset((page - 1) * page_size).limit(page_size)).all()
+        )
+        return items, total
