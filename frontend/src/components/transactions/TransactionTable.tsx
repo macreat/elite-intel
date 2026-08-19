@@ -12,9 +12,9 @@ interface TransactionTableProps {
 export function TransactionTable({ items, onDelete }: TransactionTableProps) {
   return (
     <>
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white md:block">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-100 text-left text-xs uppercase tracking-wide text-slate-600">
+      <div className="hidden overflow-hidden rounded-xl border border-white/[0.06] bg-navy-700/60 backdrop-blur-sm md:block">
+        <table className="min-w-full divide-y divide-white/[0.06]">
+          <thead className="bg-navy-800/50 text-left text-xs uppercase tracking-wide text-slate-400">
             <tr>
               <th className="px-4 py-3">Date</th>
               <th className="px-4 py-3">Type</th>
@@ -25,26 +25,26 @@ export function TransactionTable({ items, onDelete }: TransactionTableProps) {
               <th className="px-4 py-3">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-white/[0.04]">
             {items.map((item) => (
-              <tr key={item.id}>
-                <td className="px-4 py-3 text-sm">{formatDate(item.occurred_at)}</td>
+              <tr key={item.id} className="transition-colors hover:bg-white/[0.02]">
+                <td className="px-4 py-3 text-sm text-slate-300">{formatDate(item.occurred_at)}</td>
                 <td className="px-4 py-3 text-sm">
                   <span
                     className={clsx(
                       'inline-flex rounded-full px-2 py-1 text-xs font-medium',
                       item.transaction_type === 'INCOME'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-rose-100 text-rose-700',
+                        ? 'bg-mint-600/15 text-mint-500'
+                        : 'bg-rose-500/15 text-rose-400',
                     )}
                   >
                     {item.transaction_type}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm">{item.category_name ?? `#${item.category_id}`}</td>
-                <td className="px-4 py-3 text-sm">{item.description}</td>
-                <td className="px-4 py-3 text-sm font-medium">{formatCurrency(item.amount, item.currency_code)}</td>
-                <td className="max-w-[220px] truncate px-4 py-3 text-sm text-slate-600">{item.notes ?? '-'}</td>
+                <td className="px-4 py-3 text-sm text-slate-300">{item.category_name ?? `#${item.category_id}`}</td>
+                <td className="px-4 py-3 text-sm text-slate-200">{item.description}</td>
+                <td className="px-4 py-3 text-sm font-medium text-white">{formatCurrency(item.amount, item.currency_code)}</td>
+                <td className="max-w-[220px] truncate px-4 py-3 text-sm text-slate-500">{item.notes ?? '-'}</td>
                 <td className="px-4 py-3 text-sm">
                   <div className="flex gap-2">
                     <Link to={`/transactions/${item.id}/edit`} className="btn-secondary !px-2 !py-1" aria-label="Edit transaction">
@@ -52,7 +52,7 @@ export function TransactionTable({ items, onDelete }: TransactionTableProps) {
                     </Link>
                     <button
                       type="button"
-                      className="btn-secondary !px-2 !py-1 text-rose-700"
+                      className="btn-secondary !px-2 !py-1 text-rose-400"
                       onClick={() => onDelete(item.id)}
                       aria-label="Delete transaction"
                     >
@@ -74,21 +74,21 @@ export function TransactionTable({ items, onDelete }: TransactionTableProps) {
               <span
                 className={clsx(
                   'inline-flex rounded-full px-2 py-1 text-xs font-medium',
-                  item.transaction_type === 'INCOME' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700',
+                  item.transaction_type === 'INCOME' ? 'bg-mint-600/15 text-mint-500' : 'bg-rose-500/15 text-rose-400',
                 )}
               >
                 {item.transaction_type}
               </span>
             </div>
-            <p className="mt-2 font-medium">{item.description}</p>
-            <p className="text-sm text-slate-500">{item.category_name ?? `#${item.category_id}`}</p>
-            <p className="mt-1 text-base font-semibold">{formatCurrency(item.amount, item.currency_code)}</p>
-            <p className="mt-1 text-sm text-slate-600">{item.notes ?? '-'}</p>
+            <p className="mt-2 font-medium text-white">{item.description}</p>
+            <p className="text-sm text-slate-400">{item.category_name ?? `#${item.category_id}`}</p>
+            <p className="mt-1 text-base font-semibold text-white">{formatCurrency(item.amount, item.currency_code)}</p>
+            <p className="mt-1 text-sm text-slate-500">{item.notes ?? '-'}</p>
             <div className="mt-3 flex gap-2">
               <Link to={`/transactions/${item.id}/edit`} className="btn-secondary w-full gap-1">
                 <Pencil className="h-4 w-4" /> Edit
               </Link>
-              <button type="button" className="btn-secondary w-full gap-1 text-rose-700" onClick={() => onDelete(item.id)}>
+              <button type="button" className="btn-secondary w-full gap-1 text-rose-400" onClick={() => onDelete(item.id)}>
                 <Trash2 className="h-4 w-4" /> Delete
               </button>
             </div>

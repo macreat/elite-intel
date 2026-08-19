@@ -1,7 +1,7 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import type { CategoryBreakdown } from '../../types/dashboard'
 
-const COLORS = ['#2563eb', '#0ea5e9', '#22c55e', '#eab308', '#f97316', '#ec4899', '#8b5cf6', '#14b8a6']
+const COLORS = ['#00d4aa', '#22d3ee', '#5eead4', '#06b6d4', '#2dd4bf', '#0891b2', '#14b8a6', '#67e8f9']
 
 interface CategoryBreakdownChartProps {
   title: string
@@ -11,15 +11,35 @@ interface CategoryBreakdownChartProps {
 export function CategoryBreakdownChart({ title, data }: CategoryBreakdownChartProps) {
   return (
     <div className="card h-80">
-      <h3 className="mb-4 text-lg font-medium">{title}</h3>
+      <h3 className="mb-4 text-lg font-medium text-white">{title}</h3>
       <ResponsiveContainer width="100%" height="85%">
         <PieChart>
-          <Pie data={data} dataKey="total" nameKey="category_name" cx="50%" cy="50%" outerRadius={95} label>
+          <Pie
+            data={data}
+            dataKey="total"
+            nameKey="category_name"
+            cx="50%"
+            cy="50%"
+            outerRadius={95}
+            innerRadius={50}
+            strokeWidth={2}
+            stroke="#0f1629"
+            label={({ category_name, percent }) =>
+              `${category_name} ${(percent * 100).toFixed(0)}%`
+            }
+          >
             {data.map((entry, index) => (
               <Cell key={`${entry.category_id}-${entry.category_name}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: '#151d35',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '8px',
+              color: '#e2e8f0',
+            }}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

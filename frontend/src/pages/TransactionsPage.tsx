@@ -61,8 +61,8 @@ export function TransactionsPage() {
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-2xl font-semibold">Transaction History</h1>
-        <p className="text-sm text-slate-500">Filter, search, edit, and delete your transactions.</p>
+        <h1 className="text-2xl font-semibold text-white">Transaction History</h1>
+        <p className="text-sm text-slate-400">Filter, search, edit, and delete your transactions.</p>
       </header>
 
       <TransactionFilters

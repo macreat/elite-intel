@@ -10,12 +10,12 @@ interface PreviewStepProps {
 export function PreviewStep({ data, loading, onConfirm }: PreviewStepProps) {
   return (
     <section className="card">
-      <h2 className="text-lg font-medium">4) Preview and confirm</h2>
-      <p className="mt-1 text-sm text-slate-500">Showing up to first 10 valid records.</p>
+      <h2 className="text-lg font-medium text-white">4) Preview and confirm</h2>
+      <p className="mt-1 text-sm text-slate-400">Showing up to first 10 valid records.</p>
 
       <div className="mt-4 overflow-auto">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-100 text-left text-xs uppercase text-slate-600">
+        <table className="min-w-full divide-y divide-white/[0.06] text-sm">
+          <thead className="bg-navy-800/50 text-left text-xs uppercase text-slate-400">
             <tr>
               <th className="px-3 py-2">Date</th>
               <th className="px-3 py-2">Type</th>
@@ -24,9 +24,9 @@ export function PreviewStep({ data, loading, onConfirm }: PreviewStepProps) {
               <th className="px-3 py-2">Amount</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-white/[0.04]">
             {data.preview.map((row, index) => (
-              <tr key={`${row.description}-${row.amount}-${index}`}>
+              <tr key={`${row.description}-${row.amount}-${index}`} className="text-slate-300">
                 <td className="px-3 py-2">{formatDate(row.occurred_at)}</td>
                 <td className="px-3 py-2">{row.transaction_type}</td>
                 <td className="px-3 py-2">{row.category_id}</td>

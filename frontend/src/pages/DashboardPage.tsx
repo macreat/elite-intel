@@ -69,8 +69,8 @@ export function DashboardPage() {
     <div className="space-y-6">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="text-2xl font-semibold">Business Dashboard</h1>
-          <p className="text-sm text-slate-500">Track income, expenses, and savings performance.</p>
+          <h1 className="text-2xl font-semibold text-white">Business Dashboard</h1>
+          <p className="text-sm text-slate-400">Track income, expenses, and savings performance.</p>
         </div>
         <PeriodFilter
           preset={period.preset}
@@ -128,18 +128,21 @@ export function DashboardPage() {
 
           <section className="card">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-medium">Recent Transactions</h2>
-              <Link to="/transactions" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+              <h2 className="text-lg font-medium text-white">Recent Transactions</h2>
+              <Link to="/transactions" className="text-sm font-medium text-mint-500 hover:text-mint-400">
                 View all
               </Link>
             </div>
             <div className="grid gap-3">
               {(recentTransactionsState.data?.items ?? []).slice(0, 10).map((transaction) => (
-                <div key={transaction.id} className="grid grid-cols-[100px_90px_1fr_auto] items-center gap-2 text-sm">
+                <div
+                  key={transaction.id}
+                  className="grid grid-cols-[100px_90px_1fr_auto] items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-white/[0.03]"
+                >
                   <span className="text-slate-500">{formatDate(transaction.occurred_at)}</span>
-                  <span className="text-xs font-medium text-slate-700">{transaction.transaction_type}</span>
-                  <span className="truncate">{transaction.description}</span>
-                  <span className="font-medium">{formatCurrency(transaction.amount, transaction.currency_code)}</span>
+                  <span className="text-xs font-medium text-slate-400">{transaction.transaction_type}</span>
+                  <span className="truncate text-slate-300">{transaction.description}</span>
+                  <span className="font-medium text-white">{formatCurrency(transaction.amount, transaction.currency_code)}</span>
                 </div>
               ))}
             </div>

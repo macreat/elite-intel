@@ -115,8 +115,8 @@ export function TransactionFormPage() {
     <div className="mx-auto max-w-3xl space-y-4">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">{isEdit ? 'Edit Transaction' : 'Add Transaction'}</h1>
-          <p className="text-sm text-slate-500">Register income or expense transactions quickly.</p>
+          <h1 className="text-2xl font-semibold text-white">{isEdit ? 'Edit Transaction' : 'Add Transaction'}</h1>
+          <p className="text-sm text-slate-400">Register income or expense transactions quickly.</p>
         </div>
         <Link to="/transactions" className="btn-secondary">
           Back

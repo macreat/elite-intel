@@ -72,8 +72,8 @@ export function ImportPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-4">
       <header>
-        <h1 className="text-2xl font-semibold">Import Transactions</h1>
-        <p className="text-sm text-slate-500">Upload, map, validate, preview, and confirm your historical data import.</p>
+        <h1 className="text-2xl font-semibold text-white">Import Transactions</h1>
+        <p className="text-sm text-slate-400">Upload, map, validate, preview, and confirm your historical data import.</p>
       </header>
 
       {error ? <ErrorState title="Import error" message={error} /> : null}
@@ -109,8 +109,8 @@ export function ImportPage() {
 
       {step === 'success' && confirmResult ? (
         <section className="card">
-          <h2 className="text-lg font-medium text-emerald-700">Import completed</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <h2 className="text-lg font-medium text-mint-500">Import completed</h2>
+          <p className="mt-2 text-sm text-slate-400">
             Batch #{confirmResult.batch_id} inserted {confirmResult.records_inserted} transaction(s).
           </p>
           <div className="mt-4 flex gap-2">
