@@ -1,35 +1,3 @@
-import type { Category } from '../../types/category'
-import type { TransactionPayload, TransactionType } from '../../types/transaction'
-import { fromInputDate } from '../../utils/format'
-
-export interface TransactionFormValues {
-  occurred_at: string
-  transaction_type: TransactionType
-  category_id: string
-  description: string
-  amount: string
-  notes: string
-}
-
-interface TransactionFormFieldsProps {
-  values: TransactionFormValues
-  categories: Category[]
-  errors: Partial<Record<keyof TransactionFormValues, string>>
-  loadingCategories?: boolean
-  onChange: (name: keyof TransactionFormValues, value: string) => void
-}
-
-export function toPayload(values: TransactionFormValues): TransactionPayload {
-  return {
-    occurred_at: fromInputDate(values.occurred_at),
-    transaction_type: values.transaction_type,
-    category_id: Number(values.category_id),
-    description: values.description.trim(),
-    amount: Number(values.amount),
-    notes: values.notes.trim() || null,
-  }
-}
-
 import { useEffect, useState } from 'react'
 import type { Category } from '../../types/category'
 import type { TransactionPayload, TransactionType } from '../../types/transaction'
