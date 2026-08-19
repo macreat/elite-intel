@@ -48,7 +48,7 @@ export function TransactionTable({ items, onDelete }: TransactionTableProps) {
                 <td className="px-4 py-3 text-sm">
                   <div className="flex gap-2">
                     <Link to={`/transactions/${item.id}/edit`} className="btn-secondary !px-2 !py-1" aria-label="Edit transaction">
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-5 w-5" />
                     </Link>
                     <button
                       type="button"
@@ -56,7 +56,7 @@ export function TransactionTable({ items, onDelete }: TransactionTableProps) {
                       onClick={() => onDelete(item.id)}
                       aria-label="Delete transaction"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
                 </td>
@@ -86,10 +86,10 @@ export function TransactionTable({ items, onDelete }: TransactionTableProps) {
             <p className="mt-1 text-sm text-slate-500">{item.notes ?? '-'}</p>
             <div className="mt-3 flex gap-2">
               <Link to={`/transactions/${item.id}/edit`} className="btn-secondary w-full gap-1">
-                <Pencil className="h-4 w-4" /> Edit
+                <Pencil className="h-5 w-5" /> Edit
               </Link>
               <button type="button" className="btn-secondary w-full gap-1 text-rose-400" onClick={() => onDelete(item.id)}>
-                <Trash2 className="h-4 w-4" /> Delete
+                <Trash2 className="h-5 w-5" /> Delete
               </button>
             </div>
           </article>
