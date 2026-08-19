@@ -7,6 +7,15 @@ class ProductService:
     def __init__(self, db: Session):
         self.repo = ProductRepository(db)
 
+    def get(self, product_id: int):
+        return self.repo.get(product_id)
+
+    def create(self, *, name: str, category_id: int, active: bool = True):
+        from app.models.product import Product
+
+        product = Product(name=name, category_id=category_id, active=active)
+        return self.repo.create(product)
+
     def list(self, *, category_id: int | None = None, active: bool | None = None):
         return self.repo.list(category_id=category_id, active=active)
 

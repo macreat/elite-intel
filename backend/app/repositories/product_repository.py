@@ -18,6 +18,15 @@ class ProductRepository:
             stmt = stmt.where(Product.active == active)
         return list(self.db.scalars(stmt.order_by(Product.name)).all())
 
+    def get(self, product_id: int) -> Product | None:
+        return self.db.get(Product, product_id)
+
+    def create(self, product: Product) -> Product:
+        self.db.add(product)
+        self.db.flush()
+        self.db.refresh(product)
+        return product
+
     def list_catalog(
         self, *, search: str | None = None, page: int = 1, page_size: int = 20
     ) -> tuple[list[Product], int]:
