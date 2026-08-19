@@ -1,4 +1,4 @@
-export function formatCurrency(value: number, currency = 'ARS') {
+export function formatCurrency(value: number, currency = 'COP') {
   // Use Colombian Spanish formatting for visible currency presentation (thousands with dot, decimals with comma)
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',

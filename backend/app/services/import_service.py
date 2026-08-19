@@ -65,7 +65,7 @@ ALLOWED_IMPORT_CONTENT_TYPES = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
     "text/plain",
 }
-DOT_GROUPING_LOCALES = {"es_ar"}
+DOT_GROUPING_LOCALES = {"es_ar", "es_co"}
 AMOUNT_TEXT_PATTERN = re.compile(r"^[+-]?\d[\d.,]*$")
 AMOUNT_QUANTUM = Decimal("0.01")
 MAX_AMOUNT_FRACTIONAL_DIGITS = 2

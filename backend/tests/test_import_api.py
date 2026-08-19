@@ -401,7 +401,7 @@ def test_import_mapping_accepts_occurred_at_when_date_detection_is_absent(client
     assert mapping.json()["preview"][0]["description"] == "Custom date mapping"
 
 
-def test_import_parses_argentine_thousands_amount_using_configured_locale(client):
+def test_import_parses_grouped_thousands_amount_using_configured_locale(client):
     _seed_categories(client)
 
     upload = _upload_transactions_file(client, rows=[_import_row(Valor="1.234")])
@@ -424,7 +424,7 @@ def test_import_parses_argentine_thousands_amount_using_configured_locale(client
     assert mapping.json()["preview"][0]["amount"] == "1234.00"
 
 
-def test_import_keeps_argentine_decimal_amount_value(client):
+def test_import_keeps_decimal_amount_value(client):
     _seed_categories(client)
 
     upload = _upload_transactions_file(client, rows=[_import_row(Valor="1234.56")])
@@ -730,7 +730,7 @@ def _amount_mapping_payload():
 
 def test_import_rejects_amounts_with_more_than_two_fractional_digits(client, monkeypatch):
     _seed_categories(client)
-    monkeypatch.setattr(settings, "IMPORT_DEFAULT_LOCALE", "es_AR")
+    monkeypatch.setattr(settings, "IMPORT_DEFAULT_LOCALE", "es_CO")
 
     upload = _upload_transactions_file(client, filename="excess-precision.csv", rows=[_import_row(Valor="1234,567")])
     assert upload.status_code == 201
@@ -750,7 +750,7 @@ def test_import_rejects_amounts_with_more_than_two_fractional_digits(client, mon
 
 def test_import_rejects_sub_cent_amount_before_confirmation(client, monkeypatch):
     _seed_categories(client)
-    monkeypatch.setattr(settings, "IMPORT_DEFAULT_LOCALE", "es_AR")
+    monkeypatch.setattr(settings, "IMPORT_DEFAULT_LOCALE", "es_CO")
 
     upload = _upload_transactions_file(client, filename="sub-cent.csv", rows=[_import_row(Valor="0,004")])
     assert upload.status_code == 201
@@ -770,8 +770,8 @@ def test_import_rejects_sub_cent_amount_before_confirmation(client, monkeypatch)
 @pytest.mark.parametrize(
     ("locale", "raw_amount", "expected_amount"),
     [
-        ("es_AR", "1.234", "1234.00"),
-        ("es_AR", "1.234,56", "1234.56"),
+        ("es_CO", "1.234", "1234.00"),
+        ("es_CO", "1.234,56", "1234.56"),
         ("en_US", "1,234", "1234.00"),
         ("en_US", "1,234.56", "1234.56"),
     ],
@@ -794,7 +794,7 @@ def test_import_accepts_locale_grouped_whole_and_cent_amounts(
 
 def test_import_confirmation_only_inserts_rows_with_storage_safe_amounts(client, monkeypatch):
     _seed_categories(client)
-    monkeypatch.setattr(settings, "IMPORT_DEFAULT_LOCALE", "es_AR")
+    monkeypatch.setattr(settings, "IMPORT_DEFAULT_LOCALE", "es_CO")
 
     upload = _upload_transactions_file(
         client,

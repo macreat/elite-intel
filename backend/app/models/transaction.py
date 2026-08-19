@@ -31,7 +31,7 @@ class Transaction(Base, TimestampMixin):
     category_name_raw: Mapped[str | None] = mapped_column(String(150), nullable=True)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
-    currency_code: Mapped[str] = mapped_column(String(3), nullable=False, default="ARS", server_default="ARS")
+    currency_code: Mapped[str] = mapped_column(String(3), nullable=False, default="COP", server_default="COP")
     product_id: Mapped[int | None] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     source_type: Mapped[TransactionSource] = mapped_column(

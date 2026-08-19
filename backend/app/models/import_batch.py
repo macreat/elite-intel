@@ -15,7 +15,7 @@ class ImportBatch(Base, TimestampMixin):
     mapping_json: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     mapping_version: Mapped[str] = mapped_column(String(20), nullable=False, default="v1", server_default="v1")
     parser_version: Mapped[str] = mapped_column(String(20), nullable=False, default="v1", server_default="v1")
-    currency_assumption: Mapped[str] = mapped_column(String(3), nullable=False, default="ARS", server_default="ARS")
+    currency_assumption: Mapped[str] = mapped_column(String(3), nullable=False, default="COP", server_default="COP")
     status: Mapped[ImportStatus] = mapped_column(
         Enum(ImportStatus, name="import_status_enum"), nullable=False, default=ImportStatus.PENDING
     )
