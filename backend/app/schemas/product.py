@@ -9,7 +9,7 @@ from app.schemas.common import ORMBase
 class ProductRead(ORMBase):
     id: int
     name: str
-    category_id: int
+    category_id: int | None = None
     description: str | None
     active: bool
     invoice_price: Decimal | None = None

@@ -1,11 +1,10 @@
-import { BookOpen, FileUp, Home, PlusCircle, ReceiptText } from 'lucide-react'
+import { BookOpen, Home, PlusCircle, ReceiptText } from 'lucide-react'
 import { Link, NavLink } from 'react-router-dom'
 import clsx from 'clsx'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: Home },
   { to: '/transactions', label: 'Transactions', icon: ReceiptText },
-  { to: '/import', label: 'Import', icon: FileUp },
   { to: '/catalog', label: 'Catalog', icon: BookOpen },
 ]
 
@@ -35,15 +34,19 @@ export function TopBar() {
         </span>
       </Link>
 
-      {/* Nav row — centered below */}
-      <div className="flex items-center justify-center gap-3 border-t border-white/[0.06] px-6 py-3">
+      {/* Add Transaction — alone below header */}
+      <div className="flex justify-center border-t border-white/[0.06] py-3">
         <NavLink
           to="/transactions/new"
-          className="flex items-center gap-2 rounded-lg bg-mint-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-mint-600/20 transition-all hover:bg-mint-500"
+          className="flex items-center gap-2 rounded-lg bg-mint-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-mint-600/20 transition-all hover:bg-mint-500"
         >
-          <PlusCircle className="h-4 w-4" />
+          <PlusCircle className="h-5 w-5" />
           Add Transaction
         </NavLink>
+      </div>
+
+      {/* Nav row — centered below button */}
+      <div className="flex items-center justify-center gap-3 border-t border-white/[0.06] px-6 py-3">
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

@@ -3,7 +3,6 @@ import { RootLayout } from './pages/RootLayout'
 import { DashboardPage } from './pages/DashboardPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { TransactionFormPage } from './pages/TransactionFormPage'
-import { ImportPage } from './pages/ImportPage'
 import { CatalogPage } from './pages/CatalogPage'
 
 export const router = createBrowserRouter([
@@ -15,7 +14,6 @@ export const router = createBrowserRouter([
       { path: 'transactions', element: <TransactionsPage /> },
       { path: 'transactions/new', element: <TransactionFormPage /> },
       { path: 'transactions/:id/edit', element: <TransactionFormPage /> },
-      { path: 'import', element: <ImportPage /> },
       { path: 'catalog', element: <CatalogPage /> },
     ],
   },
