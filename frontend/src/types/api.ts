@@ -1,4 +1,4 @@
-export type PeriodPreset = 'today' | 'week' | 'month' | 'previous_month' | 'custom'
+export type PeriodPreset = 'today' | 'week' | 'month' | 'previous_month' | 'year' | 'all_time' | 'custom'
 
 export interface CalendarDateRange {
   start_date: string

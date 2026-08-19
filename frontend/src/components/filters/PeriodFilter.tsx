@@ -26,6 +26,8 @@ export function PeriodFilter({
           <option value="week">Current Week</option>
           <option value="month">Current Month</option>
           <option value="previous_month">Previous Month</option>
+          <option value="year">This Year</option>
+          <option value="all_time">All Time</option>
           <option value="custom">Custom Range</option>
         </select>
       </div>

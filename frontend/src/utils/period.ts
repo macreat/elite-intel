@@ -29,6 +29,14 @@ export function getPeriodRange(
     start.setHours(0, 0, 0, 0)
     end.setMonth(now.getMonth(), 0)
     end.setHours(23, 59, 59, 999)
+  } else if (preset === 'year') {
+    start.setMonth(0, 1)
+    start.setHours(0, 0, 0, 0)
+    end.setHours(23, 59, 59, 999)
+  } else if (preset === 'all_time') {
+    start.setFullYear(2020, 0, 1)
+    start.setHours(0, 0, 0, 0)
+    end.setHours(23, 59, 59, 999)
   } else {
     return {
       start_date: customStart || formatCalendarDate(now),

@@ -13,6 +13,11 @@ import type { DashboardSummary, CategoryBreakdown, TimeseriesPoint } from '../ty
 import type { Transaction } from '../types/transaction'
 import { useAsyncData } from './hooks/useAsyncData'
 
+function granularityForPreset(preset: string): 'day' | 'week' | 'month' {
+  if (preset === 'year' || preset === 'all_time') return 'week'
+  return 'day'
+}
+
 export function DashboardPage() {
   const period = usePeriod('month')
 
@@ -35,8 +40,8 @@ export function DashboardPage() {
   )
 
   const timeseriesState = useAsyncData<TimeseriesPoint[]>(
-    () => apiClient.getDashboardTimeseries(period.range),
-    [period.range.start_date, period.range.end_date],
+    () => apiClient.getDashboardTimeseries({ ...period.range, granularity: granularityForPreset(period.preset) }),
+    [period.range.start_date, period.range.end_date, period.preset],
   )
 
   const incomeCategoriesState = useAsyncData<CategoryBreakdown[]>(
