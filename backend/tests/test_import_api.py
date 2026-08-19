@@ -143,11 +143,15 @@ Ahorro mensual,Be Movil 700,Tigo 720,Fotocopias,Impresiones,Scaner,Accesorios,In
     categories = client.get("/api/v1/categories").json()
     id_to_name = {cat["id"]: cat["name"] for cat in categories}
     category_names = {id_to_name[cid] for cid in preview_ids}
+    types_by_description = {entry["description"].split(" - ")[0]: entry["transaction_type"] for entry in payload["preview"]}
     assert "Ahorro mensual" in category_names
     assert "Be Movil" in category_names
     assert "Tigo" in category_names
-    assert "Ahorro pagar" in category_names
+    assert "Ahorro para pagar" in category_names
     assert "Otros" not in category_names
+    assert types_by_description["Fotocopias"] == "INCOME"
+    assert types_by_description["Impresiones"] == "INCOME"
+    assert types_by_description["Ahorro pagar"] == "EXPENSE"
 
 
 def test_import_parses_sparse_wide_kardex_rows(client):

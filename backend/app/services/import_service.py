@@ -71,7 +71,9 @@ AMOUNT_QUANTUM = Decimal("0.01")
 MAX_AMOUNT_FRACTIONAL_DIGITS = 2
 KARDEX_CATEGORY_ALIASES = {
     "ahorro mensual": "Ahorro mensual",
-    "ahorro pagar": "Ahorro pagar",
+    "ahorro pagar": "Ahorro para pagar",
+    "ahorro para pagar": "Ahorro para pagar",
+    "salidas": "Salidas",
     "be movil": "Be Movil",
     "tigo": "Tigo",
     "fotocopias": "Fotocopias",
@@ -535,12 +537,12 @@ class ImportService:
         return entries
 
     def _infer_kardex_type(self, label: str, amount: Decimal) -> TransactionType:
+        """Business rule: everything in the kardex is INCOME except withdrawals ("Salidas")
+        and savings-to-pay ("Ahorro para pagar"), which are EXPENSE. Amount sign is ignored."""
         normalized = _normalize_label(label)
-        if normalized in {"ahorro mensual", "ahorro pagar", "be movil", "tigo", "internet", "accesorios"}:
-            return TransactionType.INCOME if amount > 0 else TransactionType.EXPENSE
-        if normalized in {"fotocopias", "impresiones", "scaner", "papeleria", "salida"}:
+        if normalized in {"salida", "salidas", "ahorro pagar", "ahorro para pagar"}:
             return TransactionType.EXPENSE
-        return TransactionType.INCOME if amount > 0 else TransactionType.EXPENSE
+        return TransactionType.INCOME
 
     def _looks_like_date(self, value: str) -> bool:
         text = (value or "").strip()
