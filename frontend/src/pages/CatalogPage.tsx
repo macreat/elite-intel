@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
 import { apiClient } from '../services/apiClient'
 import { formatCurrency } from '../utils/format'
@@ -11,7 +12,19 @@ export function CatalogPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
   const [reloadKey, setReloadKey] = useState(0)
+  const [pricesVisible, setPricesVisible] = useState(() => {
+    const stored = localStorage.getItem('elite:catalog-prices-visible')
+    return stored === null ? true : stored === 'true'
+  })
   const page_size = 20
+
+  const togglePrices = () => {
+    setPricesVisible((prev) => {
+      const next = !prev
+      localStorage.setItem('elite:catalog-prices-visible', String(next))
+      return next
+    })
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -30,9 +43,20 @@ export function CatalogPage() {
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-white">Price Catalog</h1>
-        <p className="text-sm text-slate-400">Searchable COP price dictionary of stationery products.</p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-white">Price Catalog</h1>
+          <p className="text-sm text-slate-400">Searchable COP price dictionary of stationery products.</p>
+        </div>
+        <button
+          type="button"
+          onClick={togglePrices}
+          className="rounded-lg border border-white/[0.08] p-2 text-slate-400 transition-colors hover:border-mint-600/30 hover:text-mint-500"
+          aria-label={pricesVisible ? 'Hide invoice prices' : 'Show invoice prices'}
+          title={pricesVisible ? 'Hide invoice prices' : 'Show invoice prices'}
+        >
+          {pricesVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+        </button>
       </header>
 
       <input
@@ -78,10 +102,14 @@ export function CatalogPage() {
                   <tr key={item.id} className="transition-colors hover:bg-white/[0.02]">
                     <td className="px-4 py-3 text-sm text-slate-200">{item.name}</td>
                     <td className="px-4 py-3 text-sm font-medium text-white">
-                      {item.invoice_price != null ? formatCurrency(item.invoice_price, 'COP') : '—'}
+                      {pricesVisible
+                        ? (item.invoice_price != null ? formatCurrency(item.invoice_price, 'COP') : '—')
+                        : '••••••'}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-white">
-                      {item.local_price != null ? formatCurrency(item.local_price, 'COP') : '—'}
+                      {pricesVisible
+                        ? (item.local_price != null ? formatCurrency(item.local_price, 'COP') : '—')
+                        : '••••••'}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500">unknown</td>
                   </tr>
