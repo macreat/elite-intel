@@ -26,9 +26,6 @@ export function CategoryBreakdownChart({ title, data }: CategoryBreakdownChartPr
             innerRadius={50}
             strokeWidth={2}
             stroke="#0f1629"
-            label={({ category_name, percent }) =>
-              `${category_name} ${(percent * 100).toFixed(0)}%`
-            }
           >
             {numericData.map((entry, index) => (
               <Cell key={`${entry.category_id}-${entry.category_name}`} fill={COLORS[index % COLORS.length]} />
@@ -41,6 +38,7 @@ export function CategoryBreakdownChart({ title, data }: CategoryBreakdownChartPr
               borderRadius: '8px',
               color: '#e2e8f0',
             }}
+            formatter={(value: number, name: string) => [`${value.toLocaleString()} COP`, name]}
           />
         </PieChart>
       </ResponsiveContainer>
