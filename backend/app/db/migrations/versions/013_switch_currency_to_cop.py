@@ -1,15 +1,15 @@
 """switch platform default currency from ARS to COP
 
-Revision ID: 011_switch_currency_to_cop
-Revises: 010_source_context_identity
+Revision ID: 013_switch_currency_to_cop
+Revises: 012_add_transaction_quantity
 Create Date: 2026-08-19
 """
 
 from alembic import op
 
 
-revision = "011_switch_currency_to_cop"
-down_revision = "010_source_context_identity"
+revision = "013_switch_currency_to_cop"
+down_revision = "012_add_transaction_quantity"
 branch_labels = None
 depends_on = None
 

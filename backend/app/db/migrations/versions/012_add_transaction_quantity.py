@@ -8,6 +8,7 @@ Create Date: 2026-08-19
 from alembic import op
 import sqlalchemy as sa
 
+
 revision = "012_add_transaction_quantity"
 down_revision = "011_catalog_product_prices"
 branch_labels = None
