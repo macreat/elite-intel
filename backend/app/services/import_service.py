@@ -598,16 +598,32 @@ class ImportService:
         if not match:
             return None
         candidate = match.group(0).replace(" ", "")
-        if "," in candidate and "." in candidate:
-            if candidate.rfind(",") > candidate.rfind("."):
-                candidate = candidate.replace(".", "").replace(",", ".")
+        has_dot = "." in candidate
+        has_comma = "," in candidate
+        if has_dot and has_comma:
+            last_pos = max(candidate.rfind("."), candidate.rfind(","))
+            last_sep = candidate[last_pos]
+            if len(candidate[last_pos + 1 :]) <= 2:
+                if last_sep == ",":
+                    candidate = candidate.replace(".", "").replace(",", ".")
+                else:
+                    candidate = candidate.replace(",", "")
             else:
-                candidate = candidate.replace(",", "")
-        elif "," in candidate:
-            if candidate.count(",") > 1 and len(candidate.split(",")[-1]) == 3:
+                candidate = candidate.replace(".", "").replace(",", "")
+        elif has_dot:
+            last_pos = candidate.rfind(".")
+            fractional = candidate[last_pos + 1 :]
+            if len(fractional) == 3:
+                candidate = candidate.replace(".", "")
+            else:
+                candidate = candidate[:last_pos].replace(".", "") + "." + fractional
+        elif has_comma:
+            last_pos = candidate.rfind(",")
+            fractional = candidate[last_pos + 1 :]
+            if len(fractional) == 3:
                 candidate = candidate.replace(",", "")
             else:
-                candidate = candidate.replace(",", ".")
+                candidate = candidate[:last_pos].replace(",", "") + "." + fractional
         try:
             value = Decimal(candidate)
         except InvalidOperation:

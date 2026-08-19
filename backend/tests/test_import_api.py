@@ -836,7 +836,7 @@ def test_kardex_salida_cells_with_multiple_amounts_create_one_expense_each(db_se
     assert len(entries) == 3
     assert all(entry["Categoría"] == "Salidas" for entry in entries)
     assert all(entry["Tipo"] == "EXPENSE" for entry in entries)
-    assert {entry["Valor"] for entry in entries} == {"336.90", "21600.00", "5000.00"}
+    assert {entry["Valor"] for entry in entries} == {"336900.00", "21600.00", "5000.00"}
     assert {entry["Descripción"] for entry in entries} == {"336.900 Fra Escobar 21600 Fra dulces", "5000"}
 
 
@@ -852,6 +852,29 @@ def test_kardex_salida_cell_without_amounts_is_skipped(db_session):
     )
 
     assert entries == []
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("600.000 Arriendo", Decimal("600000.00")),
+        ("336.900 Fra Escobar 21600 Fra dulces", Decimal("336900.00")),
+        ("69,300Fra movistar", Decimal("69300.00")),
+        ("1.000.000 P. Nidia", Decimal("1000000.00")),
+        ("50.000 Nohe", Decimal("50000.00")),
+        ("622.000 Arriendo", Decimal("622000.00")),
+        ("16000 Galletas", Decimal("16000.00")),
+        ("5000Chips Movistar", Decimal("5000.00")),
+        ("800000 pago Nidia", Decimal("800000.00")),
+        ("26,600 fra dulces", Decimal("26600.00")),
+        ("1.234,56", Decimal("1234.56")),
+        ("10.5", Decimal("10.5")),
+        ("-500", Decimal("-500.00")),
+    ],
+)
+def test_parse_kardex_amount_es_co(db_session, raw, expected):
+    service = ImportService(db_session)
+    assert service._parse_kardex_amount(raw) == expected
 
 
 def test_infer_kardex_type_classifies_salida_columns_as_expense(db_session):
