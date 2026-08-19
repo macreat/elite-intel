@@ -47,9 +47,8 @@ export function TransactionFormFields({
   }, [values.amount])
 
   function handleAmountChange(raw: string) {
-    // live-format while typing to show thousands grouping (dots) and preserve decimal part
-    // keep raw typed decimal separator (dot or comma)
-    setLocalAmount(formatLiveAmount(raw))
+    // allow free typing, just keep the raw display in local state
+    setLocalAmount(raw)
   }
 
   function handleAmountBlur() {

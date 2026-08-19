@@ -9,13 +9,15 @@ interface CategoryBreakdownChartProps {
 }
 
 export function CategoryBreakdownChart({ title, data }: CategoryBreakdownChartProps) {
+  const numericData = data.map((entry): CategoryBreakdown => ({ ...entry, total: Number(entry.total) }))
+
   return (
     <div className="card h-80">
       <h3 className="mb-4 text-lg font-medium text-white">{title}</h3>
       <ResponsiveContainer width="100%" height="85%">
         <PieChart>
           <Pie
-            data={data}
+            data={numericData}
             dataKey="total"
             nameKey="category_name"
             cx="50%"
@@ -28,7 +30,7 @@ export function CategoryBreakdownChart({ title, data }: CategoryBreakdownChartPr
               `${category_name} ${(percent * 100).toFixed(0)}%`
             }
           >
-            {data.map((entry, index) => (
+            {numericData.map((entry, index) => (
               <Cell key={`${entry.category_id}-${entry.category_name}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
