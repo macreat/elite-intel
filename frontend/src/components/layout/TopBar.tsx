@@ -1,5 +1,5 @@
 import { BookOpen, FileUp, Home, PlusCircle, ReceiptText } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import clsx from 'clsx'
 
 const navItems = [
@@ -25,11 +25,11 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-white/[0.06] bg-navy-800/95 backdrop-blur-md">
       <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-3">
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <EliteLogo />
           <span className="text-lg font-bold text-white">ELITE</span>
           <span className="text-[10px] font-medium tracking-widest text-mint-500">INTEL</span>
-        </div>
+        </Link>
 
         <nav className="flex items-center gap-1 rounded-full border border-white/10 bg-navy-700/60 p-1">
           {navItems.map(({ to, label, icon: Icon }) => (

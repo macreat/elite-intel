@@ -10,6 +10,7 @@ export function CatalogPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [reloadKey, setReloadKey] = useState(0)
   const page_size = 20
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export function CatalogPage() {
 
   const state = useAsyncData<PaginatedResponse<CatalogItem>>(
     () => apiClient.listCatalog({ search: debouncedSearch || undefined, page, page_size }),
-    [debouncedSearch, page],
+    [debouncedSearch, page, reloadKey],
   )
 
   const totalPages = Math.max(1, Math.ceil((state.data?.total ?? 0) / page_size))
@@ -49,7 +50,7 @@ export function CatalogPage() {
           title="Failed to load catalog"
           message={state.error}
           action={
-            <button className="btn-secondary" onClick={() => setPage((p) => p)}>
+            <button className="btn-secondary" onClick={() => setReloadKey((k) => k + 1)}>
               Retry
             </button>
           }
