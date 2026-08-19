@@ -30,6 +30,39 @@ export function toPayload(values: TransactionFormValues): TransactionPayload {
   }
 }
 
+import { useEffect, useState } from 'react'
+import type { Category } from '../../types/category'
+import type { TransactionPayload, TransactionType } from '../../types/transaction'
+import { fromInputDate, formatAmountForDisplay, parseUserAmount } from '../../utils/format'
+
+export interface TransactionFormValues {
+  occurred_at: string
+  transaction_type: TransactionType
+  category_id: string
+  description: string
+  amount: string
+  notes: string
+}
+
+interface TransactionFormFieldsProps {
+  values: TransactionFormValues
+  categories: Category[]
+  errors: Partial<Record<keyof TransactionFormValues, string>>
+  loadingCategories?: boolean
+  onChange: (name: keyof TransactionFormValues, value: string) => void
+}
+
+export function toPayload(values: TransactionFormValues): TransactionPayload {
+  return {
+    occurred_at: fromInputDate(values.occurred_at),
+    transaction_type: values.transaction_type,
+    category_id: Number(values.category_id),
+    description: values.description.trim(),
+    amount: Number(values.amount),
+    notes: values.notes.trim() || null,
+  }
+}
+
 export function TransactionFormFields({
   values,
   categories,
@@ -37,6 +70,33 @@ export function TransactionFormFields({
   loadingCategories,
   onChange,
 }: TransactionFormFieldsProps) {
+  // local display state for amount so we can show grouped thousands while typing/after blur
+  const [localAmount, setLocalAmount] = useState<string>(() => (values.amount ? formatAmountForDisplay(values.amount) : ''))
+
+  useEffect(() => {
+    // if parent updates values.amount (e.g., editing an existing tx), sync local display
+    setLocalAmount(values.amount ? formatAmountForDisplay(values.amount) : '')
+  }, [values.amount])
+
+  function handleAmountChange(raw: string) {
+    // allow free typing, just keep the raw display in local state
+    setLocalAmount(raw)
+  }
+
+  function handleAmountBlur() {
+    const parsed = parseUserAmount(localAmount)
+    if (parsed === null) {
+      setLocalAmount('')
+      onChange('amount', '')
+      return
+    }
+    // store canonical dot-decimal string in parent form values (e.g., 1234.56)
+    const canonical = parsed.toFixed(2)
+    onChange('amount', canonical)
+    // update display to formatted localized string (e.g., 1.234,56)
+    setLocalAmount(formatAmountForDisplay(canonical))
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="md:col-span-2">
@@ -101,12 +161,11 @@ export function TransactionFormFields({
         <input
           id="amount"
           className="field"
-          type="number"
-          min="0.01"
-          step="0.01"
-          value={values.amount}
-          onChange={(event) => onChange('amount', event.target.value)}
-          placeholder="0.00"
+          type="text"
+          value={localAmount}
+          onChange={(event) => handleAmountChange(event.target.value)}
+          onBlur={handleAmountBlur}
+          placeholder="0,00"
         />
         {errors.amount ? <p className="helper-error">{errors.amount}</p> : null}
       </div>

@@ -31,7 +31,7 @@ export function PreviewStep({ data, loading, onConfirm }: PreviewStepProps) {
                 <td className="px-3 py-2">{row.transaction_type}</td>
                 <td className="px-3 py-2">{row.category_id}</td>
                 <td className="px-3 py-2">{row.description}</td>
-                <td className="px-3 py-2">{formatCurrency(row.amount)}</td>
+                <td className="px-3 py-2">{formatCurrency(Number(row.amount))}</td>
               </tr>
             ))}
           </tbody>
