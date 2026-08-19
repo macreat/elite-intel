@@ -18,8 +18,8 @@ class CategoryService:
 
     def _infer_type_from_name(self, name: str) -> TransactionType:
         normalized = name.strip().lower()
-        # Treat savings (ahorro/ahorros) and exits (salida/salidas) as EXPENSE; everything else defaults to INCOME
-        if 'ahorro' in normalized or 'ahorros' in normalized or 'salida' in normalized or 'salidas' in normalized:
+        # Business rule: only cash exits (salidas) and savings earmarked for payment (ahorro para pagar) are EXPENSE; everything else defaults to INCOME
+        if 'salida' in normalized or 'ahorro para pagar' in normalized or 'ahorro pagar' in normalized:
             return TransactionType.EXPENSE
         return TransactionType.INCOME
 
