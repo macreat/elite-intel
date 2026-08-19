@@ -4,6 +4,7 @@ interface KpiCardProps {
   title: string
   value: string
   tone?: 'neutral' | 'income' | 'expense'
+  visible?: boolean
 }
 
 const toneStyles: Record<NonNullable<KpiCardProps['tone']>, string> = {
@@ -18,13 +19,15 @@ const toneAccent: Record<NonNullable<KpiCardProps['tone']>, string> = {
   expense: 'from-rose-500/10 to-transparent',
 }
 
-export function KpiCard({ title, value, tone = 'neutral' }: KpiCardProps) {
+export function KpiCard({ title, value, tone = 'neutral', visible = true }: KpiCardProps) {
   return (
     <div className="card relative overflow-hidden">
       <div className={clsx('absolute inset-0 bg-gradient-to-br opacity-60', toneAccent[tone])} />
       <div className="relative">
         <p className="text-sm text-slate-400">{title}</p>
-        <p className={clsx('mt-1 text-2xl font-semibold', toneStyles[tone])}>{value}</p>
+        <p className={clsx('mt-1 text-2xl font-semibold', toneStyles[tone])}>
+          {visible ? value : '••••••'}
+        </p>
       </div>
     </div>
   )
