@@ -21,12 +21,15 @@ interface TransactionFormFieldsProps {
 }
 
 export function toPayload(values: TransactionFormValues): TransactionPayload {
+  const raw = parseUserAmount(values.amount) ?? Number(values.amount)
+  // Round to whole pesos — COP has no decimals
+  const amount = Math.round(raw)
   return {
     occurred_at: fromInputDate(values.occurred_at),
     transaction_type: values.transaction_type,
     category_id: Number(values.category_id),
     description: values.description.trim(),
-    amount: Number(values.amount),
+    amount,
     notes: values.notes.trim() || null,
   }
 }
