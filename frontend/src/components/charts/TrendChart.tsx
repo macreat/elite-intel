@@ -22,7 +22,20 @@ export function TrendChart({ data }: TrendChartProps) {
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
           <XAxis dataKey="date" stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-          <YAxis stroke="#64748b" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+          <YAxis
+            stroke="#64748b"
+            tick={{ fill: '#94a3b8', fontSize: 12 }}
+            scale="log"
+            domain={[1, 'auto']}
+            allowDataOverflow
+            tickFormatter={(v: number) => {
+              if (v === 0) return '0'
+              if (v >= 1_000_000_000) return `${v / 1_000_000_000}B`
+              if (v >= 1_000_000) return `${v / 1_000_000}M`
+              if (v >= 1_000) return `${v / 1_000}K`
+              return String(v)
+            }}
+          />
           <Tooltip
             contentStyle={{
               backgroundColor: '#151d35',
