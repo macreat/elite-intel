@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Eye, EyeOff } from 'lucide-react'
 import { PeriodFilter } from '../components/filters/PeriodFilter'
 import { CategoryBreakdownChart } from '../components/charts/CategoryBreakdownChart'
 import { TrendChart } from '../components/charts/TrendChart'
@@ -14,6 +15,19 @@ import { useAsyncData } from './hooks/useAsyncData'
 
 export function DashboardPage() {
   const period = usePeriod('month')
+
+  const [metricsVisible, setMetricsVisible] = useState(() => {
+    const stored = localStorage.getItem('elite:metrics-visible')
+    return stored === null ? true : stored === 'true'
+  })
+
+  const toggleMetricsVisible = () => {
+    setMetricsVisible((prev) => {
+      const next = !prev
+      localStorage.setItem('elite:metrics-visible', String(next))
+      return next
+    })
+  }
 
   const summaryState = useAsyncData<DashboardSummary>(
     () => apiClient.getDashboardSummary(period.range),
@@ -69,7 +83,18 @@ export function DashboardPage() {
     <div className="space-y-6">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Business Dashboard</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold text-white">Business Dashboard</h1>
+            <button
+              type="button"
+              onClick={toggleMetricsVisible}
+              className="rounded-lg border border-white/[0.08] p-2 text-slate-400 transition-colors hover:border-mint-600/30 hover:text-mint-500"
+              aria-label={metricsVisible ? 'Hide amounts' : 'Show amounts'}
+              title={metricsVisible ? 'Hide amounts' : 'Show amounts'}
+            >
+              {metricsVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            </button>
+          </div>
           <p className="text-sm text-slate-400">Track income, expenses, and savings performance.</p>
         </div>
         <PeriodFilter
@@ -111,11 +136,11 @@ export function DashboardPage() {
       {!isLoading && !error && hasData && summaryState.data ? (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <KpiCard title="Income" value={formatCurrency(summaryState.data.total_income)} tone="income" />
-            <KpiCard title="Expenses" value={formatCurrency(summaryState.data.total_expenses)} tone="expense" />
-            <KpiCard title="Net Balance" value={formatCurrency(summaryState.data.net_balance)} />
-            <KpiCard title="Estimated Savings" value={formatCurrency(summaryState.data.estimated_savings)} />
-            <KpiCard title="Savings Rate" value={formatPercent(summaryState.data.savings_rate)} />
+            <KpiCard title="Income" value={formatCurrency(summaryState.data.total_income)} tone="income" visible={metricsVisible} />
+            <KpiCard title="Expenses" value={formatCurrency(summaryState.data.total_expenses)} tone="expense" visible={metricsVisible} />
+            <KpiCard title="Net Balance" value={formatCurrency(summaryState.data.net_balance)} visible={metricsVisible} />
+            <KpiCard title="Estimated Savings" value={formatCurrency(summaryState.data.estimated_savings)} visible={metricsVisible} />
+            <KpiCard title="Savings Rate" value={formatPercent(summaryState.data.savings_rate)} visible={metricsVisible} />
             <KpiCard title="Transaction Count" value={String(summaryState.data.transaction_count)} />
           </section>
 
@@ -142,7 +167,11 @@ export function DashboardPage() {
                   <span className="text-slate-500">{formatDate(transaction.occurred_at)}</span>
                   <span className="text-xs font-medium text-slate-400">{transaction.transaction_type}</span>
                   <span className="truncate text-slate-300">{transaction.description}</span>
-                  <span className="font-medium text-white">{formatCurrency(transaction.amount, transaction.currency_code)}</span>
+                  <span className="font-medium text-white">
+                    {metricsVisible
+                      ? formatCurrency(transaction.amount, transaction.currency_code)
+                      : '••••••'}
+                  </span>
                 </div>
               ))}
             </div>
