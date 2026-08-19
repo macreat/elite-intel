@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { DeleteConfirmModal } from '../components/transactions/DeleteConfirmModal'
 import { TransactionTable } from '../components/transactions/TransactionTable'
 import { TransactionFilters } from '../components/filters/TransactionFilters'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
 import { usePeriod } from '../hooks/usePeriod'
 import { apiClient } from '../services/apiClient'
-import { on } from '../lib/events'
 import type { Category } from '../types/category'
 import type { Transaction, TransactionType } from '../types/transaction'
 import { useAsyncData } from './hooks/useAsyncData'
 
 export function TransactionsPage() {
+  const location = useLocation()
   const period = usePeriod('month')
   const [typeFilter, setTypeFilter] = useState<TransactionType | undefined>()
   const [categoryFilter, setCategoryFilter] = useState<number | undefined>()
@@ -19,10 +20,13 @@ export function TransactionsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
 
+  // Refresh if we just saved a transaction
   useEffect(() => {
-    const unsub = on('transaction:created', () => setReloadKey((k) => k + 1))
-    return unsub
-  }, [])
+    if (location.state?.justSaved) {
+      setReloadKey((k) => k + 1)
+      window.history.replaceState({}, '')
+    }
+  }, [location.state])
 
   const categoriesState = useAsyncData<Category[]>(
     () => apiClient.listCategories(typeFilter),

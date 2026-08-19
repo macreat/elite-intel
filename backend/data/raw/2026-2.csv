@@ -8,3 +8,5 @@ Fecha,Tipo,Categoría,Descripción,Valor
 19/08/2026,INCOME,Accesorios,PAYMENT,25000.00
 19/08/2026,EXPENSE,Salidas,PAYMENT,250000.00
 19/08/2026,INCOME,Escaneo,SAVE unif,50000.00
+19/08/2026,EXPENSE,Ahorro para pagar,SAVE unif,50000.00
+19/08/2026,INCOME,Fotocopias,SAVE unif,50000.00

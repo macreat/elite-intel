@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { PeriodFilter } from '../components/filters/PeriodFilter'
 import { CategoryBreakdownChart } from '../components/charts/CategoryBreakdownChart'
@@ -8,7 +8,6 @@ import { KpiCard } from '../components/kpi/KpiCard'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
 import { usePeriod } from '../hooks/usePeriod'
 import { apiClient } from '../services/apiClient'
-import { on } from '../lib/events'
 import { formatCurrency, formatDate, formatPercent } from '../utils/format'
 import type { DashboardSummary, CategoryBreakdown, TimeseriesPoint } from '../types/dashboard'
 import type { Transaction } from '../types/transaction'
@@ -20,6 +19,7 @@ function granularityForPreset(preset: string): 'day' | 'week' | 'month' {
 }
 
 export function DashboardPage() {
+  const location = useLocation()
   const period = usePeriod('month')
 
   const [metricsVisible, setMetricsVisible] = useState(() => {
@@ -28,10 +28,13 @@ export function DashboardPage() {
   })
   const [reloadKey, setReloadKey] = useState(0)
 
+  // Refresh if we just saved a transaction
   useEffect(() => {
-    const unsub = on('transaction:created', () => setReloadKey((k) => k + 1))
-    return unsub
-  }, [])
+    if (location.state?.justSaved) {
+      setReloadKey((k) => k + 1)
+      window.history.replaceState({}, '')
+    }
+  }, [location.state])
 
   const toggleMetricsVisible = () => {
     setMetricsVisible((prev) => {
