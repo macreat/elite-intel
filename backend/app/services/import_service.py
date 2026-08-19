@@ -70,10 +70,10 @@ AMOUNT_TEXT_PATTERN = re.compile(r"^[+-]?\d[\d.,]*$")
 AMOUNT_QUANTUM = Decimal("0.01")
 MAX_AMOUNT_FRACTIONAL_DIGITS = 2
 KARDEX_CATEGORY_ALIASES = {
-    "ahorro mensual": "Otros",
-    "ahorro pagar": "Otros",
-    "be movil": "Otros",
-    "tigo": "Otros",
+    "ahorro mensual": "Ahorro mensual",
+    "ahorro pagar": "Ahorro pagar",
+    "be movil": "Be Movil",
+    "tigo": "Tigo",
     "fotocopias": "Fotocopias",
     "impresiones": "Impresiones",
     "scaner": "Escaneo",
@@ -343,6 +343,25 @@ class ImportService:
             batch.status = ImportStatus.CONFIRMED
             batch.records_inserted = inserted
             self.db.commit()
+            # After DB commit, also persist inserted transactions to the CSV ledger
+            try:
+                for row in valid_rows:
+                    if row.transaction_id:
+                        try:
+                            tx = self.transactions.get(row.transaction_id)
+                            # TransactionService handles its own CSV append helper
+                            if hasattr(self.transactions, "_append_to_persist_csv"):
+                                try:
+                                    self.transactions._append_to_persist_csv(tx)
+                                except Exception:
+                                    # CSV persistence failure should not block confirmation
+                                    pass
+                        except Exception:
+                            # If fetching the transaction fails, skip it
+                            continue
+            except Exception:
+                # Swallow any CSV persistence errors — DB commit is authoritative
+                pass
         except IntegrityError as exc:
             self.db.rollback()
             confirmed_batch = self.repo.get_batch(batch_id)

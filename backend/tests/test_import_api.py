@@ -110,6 +110,46 @@ Ahorro mensual,Be Movil 700,Tigo 720,Fotocopias,Impresiones,Scaner,Papeleria,Acc
     assert payload["preview"][0]["description"].startswith("Ahorro mensual")
 
 
+def test_kardex_parser_extracts_real_categories_not_otros(client):
+    _seed_categories(client)
+
+    content = b"""10/31/2025,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Ahorro mensual,Be Movil 700,Tigo 720,Fotocopias,Impresiones,Scaner,Accesorios,Internet,Ahorro pagar
+700000,4500,5000,1300,1600,500,2100,2000,3000
+"""
+
+    upload = client.post(
+        "/api/v1/imports/transactions",
+        files={"file": ("kardex.csv", content, "text/csv")},
+    )
+    assert upload.status_code == 201
+
+    batch_id = upload.json()["batch_id"]
+    mapping = client.post(
+        f"/api/v1/imports/{batch_id}/mapping",
+        json={
+            "mapping": {
+                "occurred_at": "Fecha",
+                "transaction_type": "Tipo",
+                "category": "Categoría",
+                "description": "Descripción",
+                "amount": "Valor",
+            }
+        },
+    )
+    assert mapping.status_code == 200
+    payload = mapping.json()
+    preview_ids = {entry["category_id"] for entry in payload["preview"]}
+    categories = client.get("/api/v1/categories").json()
+    id_to_name = {cat["id"]: cat["name"] for cat in categories}
+    category_names = {id_to_name[cid] for cid in preview_ids}
+    assert "Ahorro mensual" in category_names
+    assert "Be Movil" in category_names
+    assert "Tigo" in category_names
+    assert "Ahorro pagar" in category_names
+    assert "Otros" not in category_names
+
+
 def test_import_parses_sparse_wide_kardex_rows(client):
     _seed_categories(client)
 

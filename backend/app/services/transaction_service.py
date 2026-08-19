@@ -1,8 +1,11 @@
+import csv
 from datetime import datetime, timezone
 from decimal import Decimal
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.enums import TransactionSource, TransactionType
 from app.models.transaction import Transaction
 from app.repositories.category_repository import CategoryRepository
@@ -80,7 +83,36 @@ class TransactionService:
         created = self.repo.create(model)
         if auto_commit:
             self.db.commit()
+            try:
+                # Persist to CSV ledger when auto-committed (manual operations)
+                self._append_to_persist_csv(created)
+            except Exception:
+                # Don't raise on CSV persistence failures; DB commit is authoritative
+                pass
         return created
+
+    def _append_to_persist_csv(self, model: Transaction) -> None:
+        path: Path = Path(settings.PERSIST_TRANSACTIONS_CSV)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        write_header = not path.exists()
+        # Fetch category name for human-friendly CSV
+        try:
+            category = self.categories.get(model.category_id)
+            category_name = category.name if category is not None else ""
+        except Exception:
+            category_name = ""
+        row = [
+            model.occurred_at.astimezone(timezone.utc).strftime("%d/%m/%Y") if model.occurred_at else "",
+            model.transaction_type,
+            category_name,
+            model.description or "",
+            str(model.amount) if model.amount is not None else "",
+        ]
+        with path.open("a", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            if write_header:
+                writer.writerow(["Fecha", "Tipo", "Categoría", "Descripción", "Valor"])
+            writer.writerow(row)
 
     def update(self, transaction_id: int, payload: TransactionUpdate):
         model = self.get(transaction_id)

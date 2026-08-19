@@ -12,6 +12,7 @@ class Settings:
     IMPORT_DEFAULT_CURRENCY = os.getenv("IMPORT_DEFAULT_CURRENCY", "ARS")
     IMPORT_DEFAULT_TIMEZONE = os.getenv("IMPORT_DEFAULT_TIMEZONE", "UTC")
     IMPORT_STORAGE_DIR = Path(os.getenv("IMPORT_STORAGE_DIR", "/tmp/elite-imports"))
+    PERSIST_TRANSACTIONS_CSV = Path(os.getenv("PERSIST_TRANSACTIONS_CSV", "data/raw/2026-2.csv"))
 
 
 settings = Settings()

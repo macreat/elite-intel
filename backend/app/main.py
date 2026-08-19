@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import categories, dashboard, imports, products, transactions
+from app.api.v1 import categories, dashboard, products, transactions
 from app.core.config import settings
 from app.services.errors import DomainError
 
@@ -39,4 +39,3 @@ app.include_router(transactions.router, prefix=settings.API_V1_PREFIX)
 app.include_router(categories.router, prefix=settings.API_V1_PREFIX)
 app.include_router(products.router, prefix=settings.API_V1_PREFIX)
 app.include_router(dashboard.router, prefix=settings.API_V1_PREFIX)
-app.include_router(imports.router, prefix=settings.API_V1_PREFIX)
