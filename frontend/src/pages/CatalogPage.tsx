@@ -14,7 +14,7 @@ export function CatalogPage() {
   const [reloadKey, setReloadKey] = useState(0)
   const [pricesVisible, setPricesVisible] = useState(() => {
     const stored = localStorage.getItem('elite:catalog-prices-visible')
-    return stored === null ? true : stored === 'true'
+    return stored === null ? false : stored === 'true'
   })
   const page_size = 20
 
@@ -107,9 +107,7 @@ export function CatalogPage() {
                         : '••••••'}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-white">
-                      {pricesVisible
-                        ? (item.local_price != null ? formatCurrency(item.local_price, 'COP') : '—')
-                        : '••••••'}
+                      {item.local_price != null ? formatCurrency(item.local_price, 'COP') : '—'}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-500">unknown</td>
                   </tr>
