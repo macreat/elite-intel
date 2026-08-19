@@ -25,15 +25,15 @@ export function TrendChart({ data }: TrendChartProps) {
           <YAxis
             stroke="#64748b"
             tick={{ fill: '#94a3b8', fontSize: 12 }}
-            domain={[0, 10_000_000]}
+            domain={[0, 10000000]}
+            allowDataOverflow
+            ticks={[0, 1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000]}
             tickFormatter={(v: number) => {
               if (v === 0) return '0'
-              if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}B`
-              if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(0)}M`
-              if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`
-              return String(v)
+              if (v >= 1_000_000) return `${v / 1_000_000}M`
+              return `${v / 1_000}K`
             }}
-            width={65}
+            width={55}
           />
           <Tooltip
             contentStyle={{
@@ -48,6 +48,7 @@ export function TrendChart({ data }: TrendChartProps) {
             }}
             itemStyle={{ color: '#ffffff', fontSize: '14px' }}
             labelStyle={{ color: '#ffffff', fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}
+            formatter={(value: number) => [`${Number(value).toLocaleString()} COP`]}
           />
           <Legend wrapperStyle={{ color: '#94a3b8' }} />
           <Line
