@@ -8,7 +8,8 @@ from app.schemas.common import ORMBase
 
 class CategoryCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
-    type: TransactionType
+    # Type is optional: if omitted, backend will infer default per business rule
+    type: TransactionType | None = None
     description: str | None = Field(default=None, max_length=255)
 
 

@@ -65,6 +65,44 @@ export function formatAmountForDisplay(value: string | number | null): string {
   return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 }
 
+// Live-format a user-typed amount: insert thousands separator '.' while preserving decimal part
+export function formatLiveAmount(input: string): string {
+  if (!input) return ''
+  const trimmed = String(input).trim()
+  if (!trimmed) return ''
+  // detect last decimal separator if any
+  const lastDot = trimmed.lastIndexOf('.')
+  const lastComma = trimmed.lastIndexOf(',')
+  let sep = ''
+  let intPart = trimmed
+  let decPart = ''
+  if (lastDot > lastComma) {
+    sep = '.'
+    intPart = trimmed.slice(0, lastDot)
+    decPart = trimmed.slice(lastDot + 1)
+  } else if (lastComma > lastDot) {
+    sep = ','
+    intPart = trimmed.slice(0, lastComma)
+    decPart = trimmed.slice(lastComma + 1)
+  }
+  // remove non-digits from integer part
+  let digits = intPart.replace(/[^0-9]/g, '')
+  if (!digits) digits = '0'
+  // insert dots every three from right
+  const groups = []
+  while (digits.length > 3) {
+    groups.unshift(digits.slice(-3))
+    digits = digits.slice(0, -3)
+  }
+  if (digits) groups.unshift(digits)
+  const grouped = groups.join('.')
+  if (!sep) return grouped
+  // limit decimal part to up to 2 characters while typing
+  decPart = decPart.replace(/[^0-9]/g, '')
+  if (decPart.length > 2) decPart = decPart.slice(0, 2)
+  return `${grouped}${sep}${decPart}`
+}
+
 export function formatDate(iso: string) {
   const datePart = iso.slice(0, 10)
   if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {

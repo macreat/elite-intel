@@ -104,16 +104,21 @@ class TransactionRepository:
         }
 
     def dashboard_categories(self, *, start_date: datetime, end_date: datetime, type_filter: TransactionType | None = None):
+        # Sum signed amounts (incomes positive, expenses negative) to allow taking absolute totals for display
+        signed_sum = func.sum(case((Transaction.transaction_type == TransactionType.INCOME, Transaction.amount), else_=-Transaction.amount))
         stmt = (
-            select(Transaction.category_id, Category.name, cast(func.sum(Transaction.amount), Numeric(14, 2)))
+            select(Transaction.category_id, Category.name, cast(func.coalesce(signed_sum, 0), Numeric(14, 2)))
             .join(Category, Category.id == Transaction.category_id)
             .where(Transaction.occurred_at >= as_utc(start_date), Transaction.occurred_at <= as_utc(end_date))
             .group_by(Transaction.category_id, Category.name)
-            .order_by(func.sum(Transaction.amount).desc())
         )
         if type_filter is not None:
             stmt = stmt.where(Transaction.transaction_type == type_filter)
-        return list(self.db.execute(stmt).all())
+        rows = list(self.db.execute(stmt).all())
+        # Convert signed totals to absolute for visualization and sort by absolute value desc
+        normalized = [(cid, name, abs(total)) for (cid, name, total) in rows]
+        normalized.sort(key=lambda t: t[2], reverse=True)
+        return normalized
 
     def dashboard_timeseries(
         self,

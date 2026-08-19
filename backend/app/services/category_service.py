@@ -16,8 +16,16 @@ class CategoryService:
     def list(self, *, type_filter: TransactionType | None = None, active: bool | None = None):
         return self.repo.list(type_filter=type_filter, active=active)
 
+    def _infer_type_from_name(self, name: str) -> TransactionType:
+        normalized = name.strip().lower()
+        # Treat savings (ahorro/ahorros) and exits (salida/salidas) as EXPENSE; everything else defaults to INCOME
+        if 'ahorro' in normalized or 'ahorros' in normalized or 'salida' in normalized or 'salidas' in normalized:
+            return TransactionType.EXPENSE
+        return TransactionType.INCOME
+
     def create(self, payload: CategoryCreate):
-        model = Category(name=payload.name.strip(), type=payload.type, description=payload.description)
+        inferred_type = payload.type if payload.type is not None else self._infer_type_from_name(payload.name)
+        model = Category(name=payload.name.strip(), type=inferred_type, description=payload.description)
         try:
             created = self.repo.create(model)
             self.db.commit()
