@@ -83,12 +83,12 @@ KARDEX_CATEGORY_ALIASES = {
     "papelería": "Papelería",
     "accesorios": "Accesorios",
     "internet": "Internet",
-    "salida": "Otros",
+    "salida": "Salidas",
     "pendientes": "Otros",
     "total": "Otros",
 }
 KARDEX_HEADER_KEYS = frozenset(KARDEX_CATEGORY_ALIASES.keys())
-KARDEX_SKIP_HEADERS = frozenset({"pendientes", "total", "salida"})
+KARDEX_SKIP_HEADERS = frozenset({"pendientes", "total"})
 KARDEX_COLUMN_CAP = 32
 CSV_TEXT_ENCODINGS = ("utf-8", "cp1252")
 
@@ -517,10 +517,31 @@ class ImportService:
                     continue
                 if header_key in {"ahorro mensual", "ahorro pagar"} and raw_value.lower() in {"nan", "none"}:
                     continue
+                label = KARDEX_CATEGORY_ALIASES.get(header_key, header or "Otros")
+                if header_key in {"salida", "salidas"}:
+                    amounts = [
+                        amount
+                        for candidate in re.findall(r"[-+]?\d[\d.\s,]*\d|[-+]?\d", raw_value)
+                        if (amount := self._parse_kardex_amount(candidate)) is not None and amount != 0
+                    ]
+                    if not amounts:
+                        continue
+                    description = raw_value.strip() or (header or label).strip() or "Otros"
+                    for amount in amounts:
+                        tx_type = self._infer_kardex_type(header_key, amount)
+                        entries.append(
+                            {
+                                "Fecha": self._format_kardex_date(current_date),
+                                "Tipo": tx_type.value,
+                                "Categoría": label,
+                                "Descripción": description,
+                                "Valor": str(abs(amount)),
+                            }
+                        )
+                    continue
                 amount = self._parse_kardex_amount(raw_value)
                 if amount is None or amount == 0:
                     continue
-                label = KARDEX_CATEGORY_ALIASES.get(header_key, header or "Otros")
                 tx_type = self._infer_kardex_type(header_key, amount)
                 description_label = (header or label).strip() or "Otros"
                 description = f"{description_label} - {current_date}"

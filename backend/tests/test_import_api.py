@@ -1,10 +1,12 @@
 import csv
 import io
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
 from app.core.config import settings
+from app.models.enums import TransactionType
 from app.models.import_batch import ImportBatch
 from app.schemas.import_data import ImportMappingRequest
 from app.services.import_service import ImportService
@@ -818,3 +820,42 @@ def test_import_confirmation_only_inserts_rows_with_storage_safe_amounts(client,
     assert transactions.status_code == 200
     assert transactions.json()["total"] == 1
     assert transactions.json()["items"][0]["amount"] == "20.99"
+
+
+def test_kardex_salida_cells_with_multiple_amounts_create_one_expense_each(db_session):
+    service = ImportService(db_session)
+
+    entries = service._read_kardex_rows(
+        [
+            ["10/31/2025", "", "", "", ""],
+            ["Ahorro mensual", "salida", "salidas", "", ""],
+            ["", "336.900 Fra Escobar 21600 Fra dulces", "5000", "", ""],
+        ]
+    )
+
+    assert len(entries) == 3
+    assert all(entry["Categoría"] == "Salidas" for entry in entries)
+    assert all(entry["Tipo"] == "EXPENSE" for entry in entries)
+    assert {entry["Valor"] for entry in entries} == {"336.90", "21600.00", "5000.00"}
+    assert {entry["Descripción"] for entry in entries} == {"336.900 Fra Escobar 21600 Fra dulces", "5000"}
+
+
+def test_kardex_salida_cell_without_amounts_is_skipped(db_session):
+    service = ImportService(db_session)
+
+    entries = service._read_kardex_rows(
+        [
+            ["10/31/2025", "", "", ""],
+            ["Ahorro mensual", "salida", "", ""],
+            ["", "solo texto sin numeros", "", ""],
+        ]
+    )
+
+    assert entries == []
+
+
+def test_infer_kardex_type_classifies_salida_columns_as_expense(db_session):
+    service = ImportService(db_session)
+    assert service._infer_kardex_type("salida", Decimal("100")) == TransactionType.EXPENSE
+    assert service._infer_kardex_type("salidas", Decimal("100")) == TransactionType.EXPENSE
+    assert service._infer_kardex_type("Ahorro mensual", Decimal("100")) == TransactionType.INCOME
