@@ -34,10 +34,16 @@ export function CategoryBreakdownChart({ title, data }: CategoryBreakdownChartPr
           <Tooltip
             contentStyle={{
               backgroundColor: '#151d35',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '8px',
-              color: '#e2e8f0',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '12px',
+              color: '#ffffff',
+              fontSize: '14px',
+              fontWeight: 600,
+              padding: '10px 14px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
             }}
+            itemStyle={{ color: '#ffffff', fontSize: '14px' }}
+            labelStyle={{ color: '#ffffff', fontSize: '15px', fontWeight: 700, marginBottom: '4px' }}
             formatter={(value: number, name: string) => [`${value.toLocaleString()} COP`, name]}
           />
         </PieChart>

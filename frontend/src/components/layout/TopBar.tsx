@@ -34,14 +34,23 @@ export function TopBar() {
         </span>
       </Link>
 
-      {/* Add Transaction — alone below header */}
-      <div className="flex justify-center border-t border-white/[0.06] py-3">
+      {/* Floating bubble Add Transaction */}
+      <div className="flex justify-center border-t border-white/[0.06] py-4">
         <NavLink
           to="/transactions/new"
-          className="flex items-center gap-2 rounded-lg bg-mint-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-mint-600/20 transition-all hover:bg-mint-500"
+          className="group relative"
         >
-          <PlusCircle className="h-5 w-5" />
-          Add Transaction
+          <span
+            className="absolute -inset-2 rounded-[28px_32px_26px_34px] bg-mint-500/20 blur-md transition-all group-hover:bg-mint-400/30 group-hover:blur-lg"
+            style={{ borderRadius: '28px 32px 26px 34px' }}
+          />
+          <span
+            className="relative flex items-center gap-2.5 rounded-[28px_32px_26px_34px] bg-gradient-to-r from-mint-600 to-mint-500 px-7 py-3 text-base font-bold text-white shadow-xl shadow-mint-600/30 transition-all duration-300 group-hover:scale-105 group-hover:shadow-mint-500/40"
+            style={{ borderRadius: '28px 32px 26px 34px' }}
+          >
+            <PlusCircle className="h-5 w-5" />
+            Add Transaction
+          </span>
         </NavLink>
       </div>
 
