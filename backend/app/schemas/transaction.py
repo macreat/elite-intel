@@ -41,6 +41,7 @@ class TransactionRead(ORMBase):
     occurred_at: datetime
     transaction_type: TransactionType
     category_id: int
+    category_name: str | None = None
     description: str
     amount: Decimal
     quantity: int

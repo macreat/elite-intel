@@ -38,25 +38,34 @@ def list_transactions(
         page=page,
         page_size=page_size,
     )
+    # Attach category_name from the relationship
+    for item in items:
+        item.category_name = item.category.name if item.category else None
     return TransactionListResponse(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=TransactionRead)
 def create_transaction(payload: TransactionCreate, db: Session = Depends(get_db)):
     service = TransactionService(db)
-    return service.create(payload)
+    tx = service.create(payload)
+    tx.category_name = tx.category.name if tx.category else None
+    return tx
 
 
 @router.get("/{transaction_id}", response_model=TransactionRead)
 def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
     service = TransactionService(db)
-    return service.get(transaction_id)
+    tx = service.get(transaction_id)
+    tx.category_name = tx.category.name if tx.category else None
+    return tx
 
 
 @router.put("/{transaction_id}", response_model=TransactionRead)
 def update_transaction(transaction_id: int, payload: TransactionUpdate, db: Session = Depends(get_db)):
     service = TransactionService(db)
-    return service.update(transaction_id, payload)
+    tx = service.update(transaction_id, payload)
+    tx.category_name = tx.category.name if tx.category else None
+    return tx
 
 
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
