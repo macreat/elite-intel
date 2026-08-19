@@ -7,6 +7,7 @@ import {
   type TransactionFormValues,
 } from '../components/transactions/TransactionFormFields'
 import { apiClient } from '../services/apiClient'
+import { emit } from '../lib/events'
 import type { Category } from '../types/category'
 import { getTodayCalendarDate, toInputDate } from '../utils/format'
 import { useAsyncData } from './hooks/useAsyncData'
@@ -92,6 +93,7 @@ export function TransactionFormPage() {
         await apiClient.createTransaction(payload)
       }
       navigate('/transactions')
+      emit('transaction:created')
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Failed to save transaction')
     } finally {

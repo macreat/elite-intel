@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DeleteConfirmModal } from '../components/transactions/DeleteConfirmModal'
 import { TransactionTable } from '../components/transactions/TransactionTable'
 import { TransactionFilters } from '../components/filters/TransactionFilters'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
 import { usePeriod } from '../hooks/usePeriod'
 import { apiClient } from '../services/apiClient'
+import { on } from '../lib/events'
 import type { Category } from '../types/category'
 import type { Transaction, TransactionType } from '../types/transaction'
 import { useAsyncData } from './hooks/useAsyncData'
@@ -17,6 +18,11 @@ export function TransactionsPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    const unsub = on('transaction:created', () => setReloadKey((k) => k + 1))
+    return unsub
+  }, [])
 
   const categoriesState = useAsyncData<Category[]>(
     () => apiClient.listCategories(typeFilter),

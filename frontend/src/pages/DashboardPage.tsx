@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import { PeriodFilter } from '../components/filters/PeriodFilter'
@@ -8,6 +8,7 @@ import { KpiCard } from '../components/kpi/KpiCard'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
 import { usePeriod } from '../hooks/usePeriod'
 import { apiClient } from '../services/apiClient'
+import { on } from '../lib/events'
 import { formatCurrency, formatDate, formatPercent } from '../utils/format'
 import type { DashboardSummary, CategoryBreakdown, TimeseriesPoint } from '../types/dashboard'
 import type { Transaction } from '../types/transaction'
@@ -25,6 +26,12 @@ export function DashboardPage() {
     const stored = localStorage.getItem('elite:metrics-visible')
     return stored === null ? true : stored === 'true'
   })
+  const [reloadKey, setReloadKey] = useState(0)
+
+  useEffect(() => {
+    const unsub = on('transaction:created', () => setReloadKey((k) => k + 1))
+    return unsub
+  }, [])
 
   const toggleMetricsVisible = () => {
     setMetricsVisible((prev) => {
@@ -36,22 +43,22 @@ export function DashboardPage() {
 
   const summaryState = useAsyncData<DashboardSummary>(
     () => apiClient.getDashboardSummary(period.range),
-    [period.range.start_date, period.range.end_date],
+    [period.range.start_date, period.range.end_date, reloadKey],
   )
 
   const timeseriesState = useAsyncData<TimeseriesPoint[]>(
     () => apiClient.getDashboardTimeseries({ ...period.range, granularity: granularityForPreset(period.preset) }),
-    [period.range.start_date, period.range.end_date, period.preset],
+    [period.range.start_date, period.range.end_date, period.preset, reloadKey],
   )
 
   const incomeCategoriesState = useAsyncData<CategoryBreakdown[]>(
     () => apiClient.getDashboardCategories({ ...period.range, type: 'INCOME' }),
-    [period.range.start_date, period.range.end_date, 'income'],
+    [period.range.start_date, period.range.end_date, 'income', reloadKey],
   )
 
   const expenseCategoriesState = useAsyncData<CategoryBreakdown[]>(
     () => apiClient.getDashboardCategories({ ...period.range, type: 'EXPENSE' }),
-    [period.range.start_date, period.range.end_date, 'expense'],
+    [period.range.start_date, period.range.end_date, 'expense', reloadKey],
   )
 
   const recentTransactionsState = useAsyncData<{ items: Transaction[] }>(
@@ -63,7 +70,7 @@ export function DashboardPage() {
       })
       return { items: data.items }
     },
-    [period.range.start_date, period.range.end_date],
+    [period.range.start_date, period.range.end_date, reloadKey],
   )
 
   const isLoading =
