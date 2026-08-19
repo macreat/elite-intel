@@ -8,6 +8,7 @@ import type {
   ImportUploadResponse,
 } from '../types/import'
 import type { PaginatedResponse } from '../types/api'
+import type { CatalogItem } from '../types/catalog'
 import type { Transaction, TransactionFilters, TransactionPayload } from '../types/transaction'
 
 function resolveApiBaseUrl() {
@@ -115,6 +116,11 @@ export const apiClient = {
 
   confirmImport: async (batchId: number) => {
     const { data } = await api.post<ImportConfirmResponse>(`/imports/${batchId}/confirm`)
+    return data
+  },
+
+  listCatalog: async (params: { search?: string; page?: number; page_size?: number }) => {
+    const { data } = await api.get<PaginatedResponse<CatalogItem>>('/catalog', { params: cleanParams(params) })
     return data
   },
 }

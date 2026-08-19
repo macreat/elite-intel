@@ -21,6 +21,8 @@ from decimal import Decimal, InvalidOperation
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
+from app.core.config import settings
+
 # ---------------------------------------------------------------------------
 # Normalization (D5): strip, collapse whitespace, casefold; KEEP accents
 # ---------------------------------------------------------------------------
@@ -222,7 +224,7 @@ def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
     from app.db.base import Base
     from app.models.product import Product
 
-    engine = create_engine("sqlite+pysqlite:///./elite.db", future=True)
+    engine = create_engine(settings.DATABASE_URL, future=True)
     SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
     with SessionLocal() as session:

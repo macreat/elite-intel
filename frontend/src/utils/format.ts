@@ -1,6 +1,10 @@
+const LOCALE_BY_CURRENCY: Record<string, string> = {
+  COP: 'es-CO',
+  ARS: 'es-AR',
+}
+
 export function formatCurrency(value: number, currency = 'ARS') {
-  // Use Colombian Spanish formatting for visible currency presentation (thousands with dot, decimals with comma)
-  return new Intl.NumberFormat('es-CO', {
+  return new Intl.NumberFormat(LOCALE_BY_CURRENCY[currency] ?? 'es-AR', {
     style: 'currency',
     currency,
     maximumFractionDigits: 2,
