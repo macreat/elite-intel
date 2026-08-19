@@ -68,3 +68,4 @@ ml/models/*.joblib
 
 # SDD / skill registry cache
 .atl/
+backend/data/kardex_august.csv
