@@ -9,12 +9,42 @@ import {
   YAxis,
 } from 'recharts'
 import type { TimeseriesPoint } from '../../types/dashboard'
+import type { PeriodPreset } from '../../types/api'
 
 interface TrendChartProps {
   data: TimeseriesPoint[]
+  preset?: PeriodPreset
 }
 
-export function TrendChart({ data }: TrendChartProps) {
+function getYAxisMax(preset?: PeriodPreset): number {
+  switch (preset) {
+    case 'today':
+    case 'week':
+      return 1_000_000
+    case 'month':
+    case 'previous_month':
+      return 5_000_000
+    case 'year':
+    case 'all_time':
+      return 15_000_000
+    default:
+      return 5_000_000
+  }
+}
+
+function generateTicks(max: number): number[] {
+  const step = max / 5
+  const ticks = []
+  for (let i = 0; i <= 5; i++) {
+    ticks.push(Math.round(i * step))
+  }
+  return ticks
+}
+
+export function TrendChart({ data, preset }: TrendChartProps) {
+  const yAxisMax = getYAxisMax(preset)
+  const ticks = generateTicks(yAxisMax)
+
   return (
     <div className="card h-80">
       <h3 className="mb-4 text-lg font-medium text-white">Income / Expense Trend</h3>
@@ -25,9 +55,9 @@ export function TrendChart({ data }: TrendChartProps) {
           <YAxis
             stroke="#64748b"
             tick={{ fill: '#94a3b8', fontSize: 12 }}
-            domain={[0, 10000000]}
+            domain={[0, yAxisMax]}
             allowDataOverflow
-            ticks={[0, 1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000]}
+            ticks={ticks}
             tickFormatter={(v: number) => {
               if (v === 0) return '0'
               if (v >= 1_000_000) return `${v / 1_000_000}M`

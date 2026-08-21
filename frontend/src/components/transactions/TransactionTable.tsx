@@ -4,6 +4,12 @@ import clsx from 'clsx'
 import type { Transaction } from '../../types/transaction'
 import { formatCurrency, formatDate } from '../../utils/format'
 
+function parseAccesoriosGross(notes: string | null): number | null {
+  if (!notes) return null
+  const match = notes.match(/accesorios_gross=(\d+(?:\.\d+)?)/)
+  return match ? parseFloat(match[1]) : null
+}
+
 interface TransactionTableProps {
   items: Transaction[]
   onDelete: (id: number) => void
@@ -43,7 +49,16 @@ export function TransactionTable({ items, onDelete }: TransactionTableProps) {
                 </td>
                 <td className="px-4 py-3 text-sm text-slate-300">{item.category_name ?? `#${item.category_id}`}</td>
                 <td className="px-4 py-3 text-sm text-slate-200">{item.description}</td>
-                <td className="px-4 py-3 text-sm font-medium text-white">{formatCurrency(item.amount, item.currency_code)}</td>
+                <td className="px-4 py-3 text-sm font-medium text-white">
+                  {item.category_name === 'Accesorios' && parseAccesoriosGross(item.notes) ? (
+                    <div className="flex flex-col">
+                      <span>{formatCurrency(item.amount, item.currency_code)}</span>
+                      <span className="text-xs text-slate-400">gross: {formatCurrency(parseAccesoriosGross(item.notes)!, item.currency_code)}</span>
+                    </div>
+                  ) : (
+                    formatCurrency(item.amount, item.currency_code)
+                  )}
+                </td>
                 <td className="max-w-[220px] truncate px-4 py-3 text-sm text-slate-500">{item.notes ?? '-'}</td>
                 <td className="px-4 py-3 text-sm">
                   <div className="flex gap-2">
@@ -82,7 +97,16 @@ export function TransactionTable({ items, onDelete }: TransactionTableProps) {
             </div>
             <p className="mt-2 font-medium text-white">{item.description}</p>
             <p className="text-sm text-slate-400">{item.category_name ?? `#${item.category_id}`}</p>
-            <p className="mt-1 text-base font-semibold text-white">{formatCurrency(item.amount, item.currency_code)}</p>
+            <p className="mt-1 text-base font-semibold text-white">
+              {item.category_name === 'Accesorios' && parseAccesoriosGross(item.notes) ? (
+                <span className="flex flex-col">
+                  <span>{formatCurrency(item.amount, item.currency_code)}</span>
+                  <span className="text-xs font-normal text-slate-400">gross: {formatCurrency(parseAccesoriosGross(item.notes)!, item.currency_code)}</span>
+                </span>
+              ) : (
+                formatCurrency(item.amount, item.currency_code)
+              )}
+            </p>
             <p className="mt-1 text-sm text-slate-500">{item.notes ?? '-'}</p>
             <div className="mt-3 flex gap-2">
               <Link to={`/transactions/${item.id}/edit`} className="btn-secondary w-full gap-1">

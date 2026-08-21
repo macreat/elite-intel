@@ -147,7 +147,7 @@ Ahorro mensual,Be Movil 700,Tigo 720,Fotocopias,Impresiones,Scaner,Accesorios,In
     category_names = {id_to_name[cid] for cid in preview_ids}
     types_by_description = {entry["description"].split(" - ")[0]: entry["transaction_type"] for entry in payload["preview"]}
     assert "Ahorro mensual" in category_names
-    assert "Be Movil" in category_names
+    assert "BeMovilRemote" in category_names
     assert "Tigo" in category_names
     assert "Ahorro para pagar" in category_names
     assert "Otros" not in category_names
@@ -189,8 +189,8 @@ def test_import_parses_sparse_wide_kardex_rows(client):
     )
     assert mapping.status_code == 200
     payload = mapping.json()
-    assert payload["summary"]["records_total"] >= 12
-    assert payload["summary"]["records_valid"] >= 12
+    assert payload["summary"]["records_total"] >= 10
+    assert payload["summary"]["records_valid"] >= 10
 
 
 def test_import_rejects_file_larger_than_configured_max(client, monkeypatch):
@@ -881,4 +881,132 @@ def test_infer_kardex_type_classifies_salida_columns_as_expense(db_session):
     service = ImportService(db_session)
     assert service._infer_kardex_type("salida", Decimal("100")) == TransactionType.EXPENSE
     assert service._infer_kardex_type("salidas", Decimal("100")) == TransactionType.EXPENSE
-    assert service._infer_kardex_type("Ahorro mensual", Decimal("100")) == TransactionType.INCOME
+    assert service._infer_kardex_type("pendientes", Decimal("100")) == TransactionType.EXPENSE
+    assert service._infer_kardex_type("Ahorro mensual", Decimal("100")) == TransactionType.EXPENSE
+    assert service._infer_kardex_type("Ahorro para pagar", Decimal("100")) == TransactionType.EXPENSE
+    assert service._infer_kardex_type("Tigo", Decimal("100")) == TransactionType.EXPENSE
+
+
+def test_kardex_parser_maps_be_movil_to_bemovil_remote_and_imports_pendientes_as_expense(db_session):
+    service = ImportService(db_session)
+
+    entries = service._read_kardex_rows(
+        [
+            ["10/31/2025", "", "", "", "", ""],
+            ["Ahorro mensual", "Be Movil 700", "Fotocopias", "Pendientes", "Total", ""],
+            ["700000", "4500", "1300", "8000", "709300", ""],
+        ]
+    )
+
+    categories = {entry["Categoría"] for entry in entries}
+    assert "BeMovilRemote" in categories
+    assert "Be Movil" not in categories
+    assert "BeMovileIncome" not in categories
+
+    remote_entries = [entry for entry in entries if entry["Categoría"] == "BeMovilRemote"]
+    assert len(remote_entries) == 1
+    assert remote_entries[0]["Tipo"] == "INCOME"
+    assert remote_entries[0]["Valor"] == "4500.00"
+
+    pendientes_entries = [entry for entry in entries if entry["Categoría"] == "Pendientes"]
+    assert len(pendientes_entries) == 1
+    assert pendientes_entries[0]["Tipo"] == "EXPENSE"
+    assert pendientes_entries[0]["Valor"] == "8000.00"
+
+
+def test_kardex_parser_maps_numeric_zero_column_b_header_to_bemovil_remote(db_session):
+    """Real kardex.xlsx uses 0 / 0.0 as column B title instead of 'Be Movil'."""
+    service = ImportService(db_session)
+
+    rows = [
+        ["08/01/2026", "", "", "", "", "", "", "", "", "", "", "", "", ""],
+        [
+            "Ahorro mensual",
+            "0.0",
+            "Tigo100",
+            "Fotocopias",
+            "Impresiones",
+            "Scaner",
+            "Papeleria",
+            "Accesorios",
+            "Internet",
+            "Ahorro pagar",
+            "salida",
+            "Pendientes",
+            "Total",
+            "TOTALDAY",
+        ],
+        ["400000", "35000", "", "3900", "1800", "", "3000", "190000", "1500", "170000", "", "", "3900", "37100"],
+        ["", "", "", "3900", "1800", "", "3000", "", "", "", "", "", "", "37100"],
+    ]
+    assert service._looks_like_kardex(rows) is True
+    entries = service._read_kardex_rows(rows)
+
+    assert all(entry["Categoría"] != "Otros" for entry in entries)
+    assert all("37100" not in entry["Valor"] for entry in entries)
+    assert all(entry["Categoría"] != "TOTALDAY" for entry in entries)
+
+    remote = [e for e in entries if e["Categoría"] == "BeMovilRemote"]
+    assert len(remote) == 1
+    assert remote[0]["Valor"] == "35000.00"
+
+    accesorios = [e for e in entries if e["Categoría"] == "Accesorios"]
+    assert len(accesorios) == 1
+    assert accesorios[0]["Valor"] == "190000.00"
+
+
+def test_kardex_parser_skips_trailing_running_total_column(db_session):
+    service = ImportService(db_session)
+
+    headers16 = [
+        "Ahorro mensual",
+        "Be movil 1200000",
+        "Tigo100",
+        "Fotocopias",
+        "Impresiones",
+        "Scaner",
+        "Papeleria",
+        "Accesorios",
+        "Internet",
+        "Ahorro pagar",
+        "salida",
+        "Pendientes",
+        "Total",
+        "",
+        "",
+        "salida",
+    ]
+    data_row = ["400000", "35000", "", "3900", "1800", "", "3000", "", "1500", "170000", "", "", "3900", "", "", "8527000"]
+
+    entries = service._read_kardex_rows([["08/01/2026", "", "", "", "", ""], headers16, data_row])
+
+    assert all(entry["Valor"] != "8527000.00" for entry in entries)
+    assert all(entry["Categoría"] != "Salidas" for entry in entries)
+
+
+def test_kardex_parser_matches_tigo100_header_as_tigo_expense(db_session):
+    service = ImportService(db_session)
+
+    headers = [
+        "Ahorro mensual",
+        "Be movil 1200000",
+        "Tigo100",
+        "Fotocopias",
+        "Impresiones",
+        "Scaner",
+        "Papeleria",
+        "Accesorios",
+        "Internet",
+        "Ahorro pagar",
+        "salida",
+        "Pendientes",
+        "Total",
+    ]
+    data_row = ["", "", "4500", "1300", "1800", "", "700", "", "900", "", "", "", "9200"]
+
+    entries = service._read_kardex_rows([["08/01/2026", "", "", "", "", ""], headers, data_row])
+
+    tigo_entries = [entry for entry in entries if entry["Categoría"] == "Tigo"]
+    assert len(tigo_entries) == 1
+    assert tigo_entries[0]["Tipo"] == "EXPENSE"
+    assert tigo_entries[0]["Valor"] == "4500.00"

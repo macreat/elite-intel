@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.models.category import Category
 from app.models.enums import TransactionType
 from app.models.transaction import Transaction
+from app.services.business_rules import KPI_EXCLUDED_INCOME_CATEGORIES
 from app.services.calendar import as_utc
 
 TimeseriesGranularity = Literal["day", "week", "month"]
@@ -81,13 +82,28 @@ class TransactionRepository:
         self.db.flush()
 
     def dashboard_summary(self, *, start_date: datetime, end_date: datetime) -> dict:
-        income_case = case((Transaction.transaction_type == TransactionType.INCOME, Transaction.amount), else_=0)
+        # BeMovilRemote is volume tracking only — exclude from income / net KPIs.
+        income_case = case(
+            (
+                and_(
+                    Transaction.transaction_type == TransactionType.INCOME,
+                    Category.name.notin_(KPI_EXCLUDED_INCOME_CATEGORIES),
+                ),
+                Transaction.amount,
+            ),
+            else_=0,
+        )
         expense_case = case((Transaction.transaction_type == TransactionType.EXPENSE, Transaction.amount), else_=0)
-        stmt = select(
-            cast(func.coalesce(func.sum(income_case), 0), Numeric(14, 2)),
-            cast(func.coalesce(func.sum(expense_case), 0), Numeric(14, 2)),
-            func.count(Transaction.id),
-        ).where(Transaction.occurred_at >= as_utc(start_date), Transaction.occurred_at <= as_utc(end_date))
+        stmt = (
+            select(
+                cast(func.coalesce(func.sum(income_case), 0), Numeric(14, 2)),
+                cast(func.coalesce(func.sum(expense_case), 0), Numeric(14, 2)),
+                func.count(Transaction.id),
+            )
+            .select_from(Transaction)
+            .join(Category, Category.id == Transaction.category_id)
+            .where(Transaction.occurred_at >= as_utc(start_date), Transaction.occurred_at <= as_utc(end_date))
+        )
         income, expenses, count = self.db.execute(stmt).one()
         income = Decimal(income)
         expenses = Decimal(expenses)
@@ -109,7 +125,11 @@ class TransactionRepository:
         stmt = (
             select(Transaction.category_id, Category.name, cast(func.coalesce(signed_sum, 0), Numeric(14, 2)))
             .join(Category, Category.id == Transaction.category_id)
-            .where(Transaction.occurred_at >= as_utc(start_date), Transaction.occurred_at <= as_utc(end_date))
+            .where(
+                Transaction.occurred_at >= as_utc(start_date),
+                Transaction.occurred_at <= as_utc(end_date),
+                Category.name.notin_(KPI_EXCLUDED_INCOME_CATEGORIES),
+            )
             .group_by(Transaction.category_id, Category.name)
         )
         if type_filter is not None:
@@ -128,13 +148,19 @@ class TransactionRepository:
         timezone_name: str = "UTC",
         granularity: TimeseriesGranularity = "day",
     ):
-        stmt = select(Transaction.occurred_at, Transaction.transaction_type, Transaction.amount).where(
-            Transaction.occurred_at >= as_utc(start_date),
-            Transaction.occurred_at <= as_utc(end_date),
+        stmt = (
+            select(Transaction.occurred_at, Transaction.transaction_type, Transaction.amount, Category.name)
+            .join(Category, Category.id == Transaction.category_id)
+            .where(
+                Transaction.occurred_at >= as_utc(start_date),
+                Transaction.occurred_at <= as_utc(end_date),
+            )
         )
         local_timezone = ZoneInfo(timezone_name)
         buckets: dict[str, list[Decimal]] = defaultdict(lambda: [Decimal("0"), Decimal("0")])
-        for occurred_at, transaction_type, amount in self.db.execute(stmt).all():
+        for occurred_at, transaction_type, amount, category_name in self.db.execute(stmt).all():
+            if category_name in KPI_EXCLUDED_INCOME_CATEGORIES:
+                continue
             bucket = _timeseries_bucket_label(
                 as_utc(occurred_at).astimezone(local_timezone), granularity
             )

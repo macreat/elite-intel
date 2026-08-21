@@ -34,7 +34,7 @@ services:
       IMPORT_DEFAULT_TIMEZONE: ${IMPORT_DEFAULT_TIMEZONE:-UTC}
       IMPORT_STORAGE_DIR: ${IMPORT_STORAGE_DIR:-/tmp/elite-imports}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,7 +47,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:${BACKEND_PORT:-8000}/api/v1}
     container_name: elite_frontend
     environment:
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}

@@ -1,6 +1,6 @@
 # Delegation Rules
 
-You are the **coordinator**: design, decide, review, land. Delegate hands-on execution and well-scoped research to **executor subagents** (Agent tool, `model: sonnet`).
+You are the **coordinator**: design, decide, review, land. Delegate hands-on execution and well-scoped research to **executor subagents** (Agent tool, `model: FABLE 5 `).
 
 ## Role check first
 

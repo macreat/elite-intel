@@ -12,7 +12,7 @@ import { useAsyncData } from './hooks/useAsyncData'
 
 export function TransactionsPage() {
   const location = useLocation()
-  const period = usePeriod('month')
+  const period = usePeriod('week')
   const [typeFilter, setTypeFilter] = useState<TransactionType | undefined>()
   const [categoryFilter, setCategoryFilter] = useState<number | undefined>()
   const [search, setSearch] = useState('')

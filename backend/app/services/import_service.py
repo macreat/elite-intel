@@ -30,6 +30,7 @@ from app.schemas.import_data import (
     ImportUploadResponse,
 )
 from app.schemas.transaction import TransactionCreate
+from app.services.business_rules import resolve_accesorios_amount
 from app.services.errors import ImportStateError, ValidationDomainError
 from app.services.transaction_service import TransactionService
 
@@ -74,7 +75,10 @@ KARDEX_CATEGORY_ALIASES = {
     "ahorro pagar": "Ahorro para pagar",
     "ahorro para pagar": "Ahorro para pagar",
     "salidas": "Salidas",
-    "be movil": "Be Movil",
+    # Column B volume → BeMovilRemote (KPI-excluded). Manual net gains use BeMovileIncome only.
+    "be movil": "BeMovilRemote",
+    "bemovilremote": "BeMovilRemote",
+    "bemovileincome": "BeMovileIncome",
     "tigo": "Tigo",
     "fotocopias": "Fotocopias",
     "impresiones": "Impresiones",
@@ -84,13 +88,17 @@ KARDEX_CATEGORY_ALIASES = {
     "accesorios": "Accesorios",
     "internet": "Internet",
     "salida": "Salidas",
-    "pendientes": "Otros",
+    "pendientes": "Pendientes",
     "total": "Otros",
+    "totalday": "Otros",
 }
 KARDEX_HEADER_KEYS = frozenset(KARDEX_CATEGORY_ALIASES.keys())
-KARDEX_SKIP_HEADERS = frozenset({"pendientes", "total"})
+# Total / TOTALDAY corner columns are validation-only — never stored as transactions.
+# Be Movil (column B) is tracked as BeMovilRemote volume, not skipped.
+KARDEX_SKIP_HEADERS = frozenset({"total", "totalday"})
 KARDEX_COLUMN_CAP = 32
 CSV_TEXT_ENCODINGS = ("utf-8", "cp1252")
+_BEMOVIL_PLACEHOLDER_RE = re.compile(r"^0+(\.0+)?$")
 
 
 def _canonical_utc_timestamp(value: datetime) -> str:
@@ -131,6 +139,44 @@ def _normalize_header(header: str) -> str:
     return re.sub(r"\s+", " ", header.strip().lower())
 
 
+def _normalize_path(path: str | Path) -> Path:
+    """
+    Normalize user-provided paths, handling backslashes and WSL/UNC-style paths.
+    - Replace leading "\\wsl.localhost\\Ubuntu\\" with "/home/" and convert backslashes to forward slashes.
+    - If a UNC/network path (\\\\host\\share) that cannot be mapped is provided, raise ValueError instructing upload.
+    Returns a pathlib.Path.
+    """
+    if isinstance(path, Path):
+        p = path
+    else:
+        p = Path(str(path))
+    text = str(p)
+    # Handle WSL UNC style: \\wsl.localhost\Ubuntu\...
+    if text.startswith("\\\\wsl.localhost\\Ubuntu\\") or text.startswith(r"\\wsl.localhost\\Ubuntu\\"):
+        # strip leading slashes and the known prefix
+        # split on backslash to preserve remainder
+        parts = text.split("\\")
+        # parts like ['', '', 'wsl.localhost', 'Ubuntu', 'home', 'user', ...]
+        try:
+            tail_index = parts.index("Ubuntu") + 1
+            tail = "/".join(parts[tail_index:])
+        except ValueError:
+            tail = "".join(parts[4:])
+        tail = tail.lstrip("/")
+        if tail.startswith("home/"):
+            normalized = "/" + tail
+        else:
+            normalized = "/home/" + tail if tail else "/home"
+        return Path(normalized)
+    # If other UNC paths (start with \\) are provided, reject and ask for upload
+    if text.startswith("\\\\"):
+        raise ValueError("UNC or network paths are not supported. Please upload the file instead of providing a network path.")
+    # Convert backslashes to forward slashes for simple Windows-style paths
+    if "\\" in text:
+        text = text.replace("\\", "/")
+    return Path(text)
+
+
 def _trim_csv_row(row) -> list[str]:
     cells = ["" if cell is None else str(cell).strip() for cell in row]
     while cells and cells[-1] == "":
@@ -149,6 +195,33 @@ def _match_kardex_header(header: str) -> str | None:
     for key in KARDEX_HEADER_KEYS:
         if normalized.startswith(f"{key} "):
             return key
+    digits_stripped = re.sub(r"\d+$", "", normalized)
+    if digits_stripped and digits_stripped != normalized and digits_stripped in KARDEX_HEADER_KEYS:
+        return digits_stripped
+    return None
+
+
+def _is_bemovil_column_placeholder(header: str) -> bool:
+    """Real kardex.xlsx often stores column B title as 0 / 0.0 instead of 'Be Movil'."""
+    raw = str(header or "").strip()
+    if not raw:
+        return True
+    # Match before label-normalization: '.' becomes a space in _normalize_label.
+    if _BEMOVIL_PLACEHOLDER_RE.fullmatch(raw):
+        return True
+    normalized = _normalize_label(raw)
+    if not normalized:
+        return True
+    return bool(_BEMOVIL_PLACEHOLDER_RE.fullmatch(normalized.replace(" ", ".")))
+
+
+def _resolve_kardex_header_key(index: int, head: str) -> str | None:
+    header_key = _match_kardex_header(head)
+    if header_key is not None:
+        return header_key
+    # Positional column B (index 1): Be Movil volume when title is blank/numeric placeholder.
+    if index == 1 and _is_bemovil_column_placeholder(head):
+        return "be movil"
     return None
 
 
@@ -381,10 +454,13 @@ class ImportService:
         return ImportConfirmResponse(batch_id=batch_id, status=batch.status, records_inserted=inserted)
 
     def _detect_columns(self, path: Path, source_type: str) -> list[str]:
+        path = _normalize_path(path)
+        if not path.exists():
+            raise ValueError("File path does not exist. Please upload the file instead of providing a network/UNC path.")
         if source_type == "CSV":
             return self._detect_csv_columns(path)
         try:
-            frame = pd.read_excel(path)
+            frame = pd.read_excel(path, header=None)
         except (TypeError, ValueError):
             return self._detect_csv_columns(path)
         trimmed_preview = [_trim_csv_row(row) for row in frame.head(50).fillna("").to_numpy().tolist()]
@@ -393,6 +469,9 @@ class ImportService:
         return [str(c) for c in frame.columns]
 
     def _resolve_csv_encoding(self, path: Path) -> str:
+        path = _normalize_path(path)
+        if not path.exists():
+            raise ValueError("File path does not exist. Please upload the file instead of providing a network/UNC path.")
         cache_key = str(path.resolve())
         cached = self._csv_encoding_cache.get(cache_key)
         if cached:
@@ -409,12 +488,18 @@ class ImportService:
         raise ValidationDomainError("unable to decode CSV file")
 
     def _iter_trimmed_csv_rows(self, path: Path):
+        path = _normalize_path(path)
+        if not path.exists():
+            raise ValueError("File path does not exist. Please upload the file instead of providing a network/UNC path.")
         encoding = self._resolve_csv_encoding(path)
         with path.open("r", encoding=encoding, newline="") as handle:
             for row in csv.reader(handle):
                 yield _trim_csv_row(row)
 
     def _detect_csv_columns(self, path: Path) -> list[str]:
+        path = _normalize_path(path)
+        if not path.exists():
+            raise ValueError("File path does not exist. Please upload the file instead of providing a network/UNC path.")
         if self._csv_path_looks_like_kardex(path):
             return ["Fecha", "Tipo", "Categoría", "Descripción", "Valor"]
         for row in self._iter_trimmed_csv_rows(path):
@@ -422,10 +507,13 @@ class ImportService:
         return []
 
     def _read_rows(self, path: Path, source_type: str) -> list[dict]:
+        path = _normalize_path(path)
+        if not path.exists():
+            raise ValueError("File path does not exist. Please upload the file instead of providing a network/UNC path.")
         if source_type == "CSV":
             return self._read_csv_rows(path)
         try:
-            frame = pd.read_excel(path)
+            frame = pd.read_excel(path, header=None)
         except (TypeError, ValueError):
             return self._read_csv_rows(path)
         frame = frame.fillna("")
@@ -435,6 +523,9 @@ class ImportService:
         return frame.to_dict(orient="records")
 
     def _read_csv_rows(self, path: Path) -> list[dict]:
+        path = _normalize_path(path)
+        if not path.exists():
+            raise ValueError("File path does not exist. Please upload the file instead of providing a network/UNC path.")
         if self._csv_path_looks_like_kardex(path):
             return self._read_kardex_rows(self._iter_trimmed_csv_rows(path))
 
@@ -456,38 +547,62 @@ class ImportService:
             return records
 
     def _csv_path_looks_like_kardex(self, path: Path) -> bool:
-        seen_ahorro = False
-        seen_be_movil = False
+        path = _normalize_path(path)
+        if not path.exists():
+            # If the path doesn't exist, treat it as not a kardex path rather than crashing
+            return False
         try:
-            for row in self._iter_trimmed_csv_rows(path):
-                for cell in row:
-                    label = _normalize_label(cell)
-                    if "ahorro mensual" in label:
-                        seen_ahorro = True
-                    if "be movil" in label:
-                        seen_be_movil = True
-                    if seen_ahorro and seen_be_movil:
-                        return True
+            return self._looks_like_kardex(list(self._iter_trimmed_csv_rows(path)))
         except UnicodeDecodeError as exc:
             raise ValidationDomainError("unable to decode CSV file") from exc
-        return False
 
     def _looks_like_kardex(self, rows: list[list[str]]) -> bool:
         if not rows:
             return False
         flattened = [cell for row in rows for cell in row if cell]
-        seen_ahorro = any("ahorro mensual" in _normalize_label(cell) for cell in flattened)
-        seen_be_movil = any("be movil" in _normalize_label(cell) for cell in flattened)
-        return seen_ahorro and seen_be_movil
+        labels = [_normalize_label(cell) for cell in flattened]
+        seen_ahorro = any("ahorro mensual" in label for label in labels)
+        seen_be_movil = any("be movil" in label for label in labels)
+        seen_sales = any(
+            any(token in label for token in ("fotocopias", "accesorios", "impresiones", "papeleria", "papelería"))
+            for label in labels
+        )
+        seen_total = any(label == "total" or label.startswith("total") for label in labels)
+        # Layout signature covers xlsx where column B title is a numeric placeholder (0).
+        return (seen_ahorro and seen_be_movil) or (seen_ahorro and seen_sales and seen_total)
 
     def _looks_like_kardex_frame(self, frame: pd.DataFrame) -> bool:
         trimmed_rows = [_trim_csv_row(row) for row in frame.fillna("").to_numpy().tolist()]
         return self._looks_like_kardex(trimmed_rows)
 
     def _read_kardex_rows(self, rows) -> list[dict]:
+        """Parse the kardex pivot layout into flat transactions.
+
+        Layout per day (date row, then a header row, then data rows, then a
+        subtotal row that recapitulates each category's daily sum):
+          - The per-day subtotal row is NOT a transaction and is dropped.
+          - 'Total' / Total-day corner columns are ignored (validation-only).
+          - Column B 'Be Movil' maps to BeMovilRemote volume tracking (excluded
+            from normal income KPIs in dashboard summary / timeseries).
+          - Accesorios gross is later converted to 40% profit on normalize/create.
+          - Column semantics: sales columns are INCOME, savings/outflow
+            columns (Pendientes, Ahorro para pagar, Salidas, Tigo, Ahorro
+            mensual) are EXPENSE.
+          - BeMovileIncome is never auto-derived here; humans enter it manually.
+        """
         entries: list[dict] = []
-        current_date = None
+        # Group rows by day, skipping blank rows and header rows.
+        day_groups: list[tuple[str | None, list[list[str]]]] = []
+        current_date: str | None = None
+        current_group: list[list[str]] = []
         current_header: list[str] = []
+
+        def _flush_group():
+            nonlocal current_group, current_header
+            if current_header and current_group:
+                day_groups.append((current_date, current_header, current_group))
+            current_group = []
+            current_header = []
 
         for row in rows:
             if row is None:
@@ -496,72 +611,99 @@ class ImportService:
             if not any(cells):
                 continue
             if any(self._looks_like_date(cell) for cell in cells[:2]):
+                _flush_group()
                 current_date = next((cell for cell in cells if self._looks_like_date(cell)), None)
-                continue
-            if not current_date:
+                current_header = []
                 continue
             if not current_header and any(_match_kardex_header(cell) == "ahorro mensual" for cell in cells):
+                _flush_group()
                 current_header = cells
                 continue
-            if not current_header:
-                continue
+            if current_header:
+                current_group.append(cells)
 
-            for index, header in enumerate(current_header):
-                if index >= len(cells):
+        _flush_group()
+
+        for block_index, (day_date, header, group) in enumerate(day_groups):
+            # Drop the per-day subtotal row for completed days. Every day block
+            # except the last one in the file is a completed day (followed by
+            # the next date); the final block is still open and has no corner.
+            data_rows = group[:-1] if block_index < len(day_groups) - 1 else group
+
+            # Columns from 'Total' / 'TOTALDAY' onward are corner/cumulative
+            # columns (and a trailing running-total column on some days), never
+            # transactions. Column B may be titled 0 / 0.0 instead of Be Movil.
+            header_columns: list[tuple[int, str, str]] = []
+            for index, head in enumerate(header):
+                header_key = _resolve_kardex_header_key(index, head)
+                if header_key in KARDEX_SKIP_HEADERS:
                     break
-                header_key = _match_kardex_header(header)
-                if header_key is None or header_key in KARDEX_SKIP_HEADERS:
+                if header_key is None:
                     continue
-                raw_value = cells[index]
-                if raw_value == "":
-                    continue
-                if header_key in {"ahorro mensual", "ahorro pagar"} and raw_value.lower() in {"nan", "none"}:
-                    continue
-                label = KARDEX_CATEGORY_ALIASES.get(header_key, header or "Otros")
-                if header_key in {"salida", "salidas"}:
-                    amounts = [
-                        amount
-                        for candidate in re.findall(r"[-+]?\d[\d.\s,]*\d|[-+]?\d", raw_value)
-                        if (amount := self._parse_kardex_amount(candidate)) is not None and amount != 0
-                    ]
-                    if not amounts:
+                header_columns.append((index, head, header_key))
+
+            for cells in data_rows:
+                for index, head, header_key in header_columns:
+                    if index >= len(cells):
+                        break
+                    raw_value = cells[index]
+                    if raw_value == "":
                         continue
-                    description = raw_value.strip() or (header or label).strip() or "Otros"
-                    for amount in amounts:
-                        tx_type = self._infer_kardex_type(header_key, amount)
-                        entries.append(
-                            {
-                                "Fecha": self._format_kardex_date(current_date),
-                                "Tipo": tx_type.value,
-                                "Categoría": label,
-                                "Descripción": description,
-                                "Valor": str(abs(amount)),
-                            }
-                        )
-                    continue
-                amount = self._parse_kardex_amount(raw_value)
-                if amount is None or amount == 0:
-                    continue
-                tx_type = self._infer_kardex_type(header_key, amount)
-                description_label = (header or label).strip() or "Otros"
-                description = f"{description_label} - {current_date}"
-                entries.append(
-                    {
-                        "Fecha": self._format_kardex_date(current_date),
-                        "Tipo": tx_type.value,
-                        "Categoría": label,
-                        "Descripción": description,
-                        "Valor": str(abs(amount)),
-                    }
-                )
+                    label = KARDEX_CATEGORY_ALIASES.get(header_key, head or "Otros")
+                    if header_key in {"salida", "salidas"}:
+                        amounts = [
+                            amount
+                            for candidate in re.findall(r"[-+]?\d[\d.\s,]*\d|[-+]?\d", raw_value)
+                            if (amount := self._parse_kardex_amount(candidate)) is not None and amount != 0
+                        ]
+                        if not amounts:
+                            continue
+                        description = raw_value.strip() or (head or label).strip() or "Otros"
+                        for amount in amounts:
+                            tx_type = self._infer_kardex_type(header_key, amount)
+                            entries.append(
+                                {
+                                    "Fecha": self._format_kardex_date(day_date),
+                                    "Tipo": tx_type.value,
+                                    "Categoría": label,
+                                    "Descripción": description,
+                                    "Valor": str(abs(amount)),
+                                }
+                            )
+                        continue
+                    amount = self._parse_kardex_amount(raw_value)
+                    if amount is None or amount == 0:
+                        continue
+                    tx_type = self._infer_kardex_type(header_key, amount)
+                    description_label = (
+                        label if header_key == "be movil" else ((head or label).strip() or "Otros")
+                    )
+                    description = f"{description_label} - {self._format_kardex_date(day_date)}"
+                    entries.append(
+                        {
+                            "Fecha": self._format_kardex_date(day_date),
+                            "Tipo": tx_type.value,
+                            "Categoría": label,
+                            "Descripción": description,
+                            "Valor": str(abs(amount)),
+                        }
+                    )
 
         return entries
 
     def _infer_kardex_type(self, label: str, amount: Decimal) -> TransactionType:
-        """Business rule: everything in the kardex is INCOME except withdrawals ("Salidas")
-        and savings-to-pay ("Ahorro para pagar"), which are EXPENSE. Amount sign is ignored."""
+        """Business rule: sales columns are INCOME; savings/outflow columns
+        (Pendientes, Ahorro para pagar, Salidas, Tigo) are EXPENSE.
+        Ahorro mensual is INCOME. Amount sign is ignored."""
         normalized = _normalize_label(label)
-        if normalized in {"salida", "salidas", "ahorro pagar", "ahorro para pagar"}:
+        if normalized in {
+            "salida",
+            "salidas",
+            "ahorro pagar",
+            "ahorro para pagar",
+            "pendientes",
+            "tigo",
+        }:
             return TransactionType.EXPENSE
         return TransactionType.INCOME
 
@@ -594,6 +736,15 @@ class ImportService:
         text = str(raw).strip()
         if not text or text.lower() in {"nan", "none", "null"}:
             return None
+        # Remove simple currency words like 'pesos' (case-insensitive)
+        text = re.sub(r"(?i)\bpesos\b", "", text).strip()
+        # If the text is a plain integer string like '250000', accept it as COP whole units
+        if re.fullmatch(r"\d+", text):
+            try:
+                return Decimal(text).quantize(AMOUNT_QUANTUM)
+            except InvalidOperation:
+                return None
+        # Fallback to older, more permissive parsing for other numeric formats
         match = re.search(r"[-+]?\d[\d.\s,]*\d|[-+]?\d", text)
         if not match:
             return None
@@ -804,6 +955,10 @@ class ImportService:
                 product = self.db.get(Product, product_id)
                 if product is None:
                     return {"ok": False, "error_code": "UNKNOWN_PRODUCT", "message": "Unknown product"}
+
+            category_model = self.db.get(Category, category_id)
+            category_name = category_model.name if category_model is not None else category_raw
+            amount, notes = resolve_accesorios_amount(category_name, amount, notes)
 
             canonical_occurred_at = _canonical_utc_timestamp(occurred_at)
             payload = {

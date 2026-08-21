@@ -20,7 +20,7 @@ function granularityForPreset(preset: string): 'day' | 'week' | 'month' {
 
 export function DashboardPage() {
   const location = useLocation()
-  const period = usePeriod('month')
+  const period = usePeriod('week')
 
   const [metricsVisible, setMetricsVisible] = useState(() => {
     const stored = localStorage.getItem('elite:metrics-visible')
@@ -159,7 +159,7 @@ export function DashboardPage() {
             <KpiCard title="Transaction Count" value={String(summaryState.data.transaction_count)} />
           </section>
 
-          <TrendChart data={timeseriesState.data ?? []} />
+          <TrendChart data={timeseriesState.data ?? []} preset={period.preset} />
 
           <section className="grid gap-4 lg:grid-cols-2">
             <CategoryBreakdownChart title="Income by Category" data={incomeCategoriesState.data ?? []} />
@@ -183,9 +183,16 @@ export function DashboardPage() {
                   <span className="text-xs font-medium text-slate-400">{transaction.transaction_type}</span>
                   <span className="truncate text-slate-300">{transaction.description}</span>
                   <span className="font-medium text-white">
-                    {metricsVisible
-                      ? formatCurrency(transaction.amount, transaction.currency_code)
-                      : '••••••'}
+                    {metricsVisible ? (
+                      transaction.category_name === 'Accesorios' && transaction.notes?.includes('accesorios_gross=') ? (
+                        <span className="flex flex-col items-end">
+                          <span>{formatCurrency(transaction.amount, transaction.currency_code)}</span>
+                          <span className="text-xs text-slate-400">gross: {formatCurrency(parseFloat(transaction.notes.match(/accesorios_gross=(\d+(?:\.\d+)?)/)?.[1] ?? '0'), transaction.currency_code)}</span>
+                        </span>
+                      ) : (
+                        formatCurrency(transaction.amount, transaction.currency_code)
+                      )
+                    ) : '••••••'}
                   </span>
                 </div>
               ))}
