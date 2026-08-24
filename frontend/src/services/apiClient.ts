@@ -9,6 +9,7 @@ import type {
 } from '../types/import'
 import type { PaginatedResponse } from '../types/api'
 import type { CatalogItem } from '../types/catalog'
+import type { StockBulkPayload, StockBulkResponse } from '../types/catalog'
 import type { Transaction, TransactionFilters, TransactionPayload } from '../types/transaction'
 
 function resolveApiBaseUrl() {
@@ -122,5 +123,22 @@ export const apiClient = {
   listCatalog: async (params: { search?: string; page?: number; page_size?: number }) => {
     const { data } = await api.get<PaginatedResponse<CatalogItem>>('/catalog', { params: cleanParams(params) })
     return data
+  },
+
+  bulkUpdateStock: async (payload: StockBulkPayload) => {
+    const { data } = await api.post<StockBulkResponse>('/products/stock/bulk', payload)
+    return data
+  },
+
+  listAllCatalogProducts: async (): Promise<CatalogItem[]> => {
+    const all: CatalogItem[] = []
+    let page = 1
+    for (;;) {
+      const data = await apiClient.listCatalog({ page, page_size: 100 })
+      all.push(...data.items)
+      if (all.length >= data.total || data.items.length === 0) break
+      page += 1
+    }
+    return all
   },
 }

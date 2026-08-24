@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
+import { StockBulkModal } from '../components/catalog/StockBulkModal'
 import { apiClient } from '../services/apiClient'
 import { formatCurrency } from '../utils/format'
 import type { PaginatedResponse } from '../types/api'
@@ -16,6 +17,7 @@ export function CatalogPage() {
     const stored = localStorage.getItem('elite:catalog-prices-visible')
     return stored === null ? false : stored === 'true'
   })
+  const [stockModalOpen, setStockModalOpen] = useState(false)
   const page_size = 20
 
   const togglePrices = () => {
@@ -48,15 +50,24 @@ export function CatalogPage() {
           <h1 className="text-2xl font-semibold text-white">Price Catalog</h1>
           <p className="text-sm text-slate-400">Searchable COP price dictionary of stationery products.</p>
         </div>
-        <button
-          type="button"
-          onClick={togglePrices}
-          className="rounded-lg border border-white/[0.08] p-2 text-slate-400 transition-colors hover:border-mint-600/30 hover:text-mint-500"
-          aria-label={pricesVisible ? 'Hide invoice prices' : 'Show invoice prices'}
-          title={pricesVisible ? 'Hide invoice prices' : 'Show invoice prices'}
-        >
-          {pricesVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setStockModalOpen(true)}
+            className="btn-secondary text-sm"
+          >
+            Change stock
+          </button>
+          <button
+            type="button"
+            onClick={togglePrices}
+            className="rounded-lg border border-white/[0.08] p-2 text-slate-400 transition-colors hover:border-mint-600/30 hover:text-mint-500"
+            aria-label={pricesVisible ? 'Hide invoice prices' : 'Show invoice prices'}
+            title={pricesVisible ? 'Hide invoice prices' : 'Show invoice prices'}
+          >
+            {pricesVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+          </button>
+        </div>
       </header>
 
       <input
@@ -109,7 +120,9 @@ export function CatalogPage() {
                     <td className="px-4 py-3 text-sm font-medium text-white">
                       {item.local_price != null ? formatCurrency(item.local_price, 'COP') : '—'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-500">unknown</td>
+                    <td className="px-4 py-3 text-sm text-slate-300">
+                      {item.stock_qty ?? '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -137,6 +150,12 @@ export function CatalogPage() {
           </div>
         </>
       ) : null}
+
+      <StockBulkModal
+        open={stockModalOpen}
+        onClose={() => setStockModalOpen(false)}
+        onApplied={() => setReloadKey((k) => k + 1)}
+      />
     </div>
   )
 }

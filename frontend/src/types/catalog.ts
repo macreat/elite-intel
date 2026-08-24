@@ -11,3 +11,16 @@ export interface CatalogItem {
   created_at: string
   updated_at: string
 }
+
+export interface StockBulkEntry {
+  product_id: number
+  stock: number
+}
+
+export interface StockBulkPayload {
+  items: StockBulkEntry[]
+}
+
+export interface StockBulkResponse {
+  items: CatalogItem[]
+}
