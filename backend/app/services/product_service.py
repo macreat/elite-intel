@@ -1,9 +1,36 @@
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.repositories.product_repository import ProductRepository
 from app.services.errors import EntityNotFoundError
+
+logger = logging.getLogger(__name__)
+
+
+def _export_stock_to_catalog(products) -> None:
+    """Best-effort mirror of stock changes into the source xlsx catalog.
+
+    The DB is the source of truth: any export failure is logged as a
+    warning and never propagated to the caller.
+    """
+    try:
+        from app.services.catalog_export import sync_stocks_to_catalog
+
+        counts = sync_stocks_to_catalog(settings.CATALOG_XLSX_PATH, products)
+        logger.info(
+            "catalog export: %s updated, %s skipped (%s)",
+            counts["updated"],
+            counts["skipped"],
+            settings.CATALOG_XLSX_PATH,
+        )
+    except (OSError, PermissionError, ValueError):
+        logger.warning(
+            "catalog export failed for %s", settings.CATALOG_XLSX_PATH, exc_info=True
+        )
 
 
 class ProductService:
@@ -32,6 +59,7 @@ class ProductService:
         product.stock_qty = stock
         self.repo.db.commit()
         self.repo.db.refresh(product)
+        _export_stock_to_catalog([product])
         return product
 
     def bulk_update_stocks(self, items: list[tuple[int, int | None]]) -> list:
@@ -50,4 +78,5 @@ class ProductService:
         self.repo.db.commit()
         for product in updated:
             self.repo.db.refresh(product)
+        _export_stock_to_catalog(updated)  # single save for the whole batch
         return updated

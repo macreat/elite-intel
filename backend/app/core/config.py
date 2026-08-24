@@ -13,6 +13,9 @@ class Settings:
     IMPORT_DEFAULT_TIMEZONE = os.getenv("IMPORT_DEFAULT_TIMEZONE", "UTC")
     IMPORT_STORAGE_DIR = Path(os.getenv("IMPORT_STORAGE_DIR", "/tmp/elite-imports"))
     PERSIST_TRANSACTIONS_CSV = Path(os.getenv("PERSIST_TRANSACTIONS_CSV", "data/raw/2026-2.csv"))
+    CATALOG_XLSX_PATH = Path(
+        os.getenv("CATALOG_XLSX_PATH", "/app/data/raw/PRECIOS_PRODUCTOS_PAPELERIA.xlsx")
+    )
 
 
 settings = Settings()
