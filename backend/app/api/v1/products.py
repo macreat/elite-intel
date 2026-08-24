@@ -3,7 +3,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.schemas.product import ProductRead
+from app.schemas.product import (
+    ProductRead,
+    StockBulkRequest,
+    StockBulkResponse,
+    StockUpdateRequest,
+)
 from app.services.errors import EntityNotFoundError
 from app.services.product_service import ProductService
 
@@ -38,3 +43,23 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     if product is None:
         raise HTTPException(status_code=404, detail="product not found")
     return product
+
+
+@router.patch("/{product_id}/stock", response_model=ProductRead)
+def update_product_stock(product_id: int, payload: StockUpdateRequest, db: Session = Depends(get_db)):
+    service = ProductService(db)
+    try:
+        return service.update_stock(product_id, payload.stock)
+    except EntityNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="product not found") from exc
+
+
+@router.post("/stock/bulk", response_model=StockBulkResponse)
+def bulk_update_stock(payload: StockBulkRequest, db: Session = Depends(get_db)):
+    service = ProductService(db)
+    items = [(item.product_id, item.stock) for item in payload.items]
+    try:
+        updated = service.bulk_update_stocks(items)
+    except EntityNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return StockBulkResponse(items=updated)

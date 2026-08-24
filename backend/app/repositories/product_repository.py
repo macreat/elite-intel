@@ -21,6 +21,12 @@ class ProductRepository:
     def get(self, product_id: int) -> Product | None:
         return self.db.get(Product, product_id)
 
+    def get_many(self, product_ids: list[int]) -> dict[int, Product]:
+        if not product_ids:
+            return {}
+        stmt = select(Product).where(Product.id.in_(product_ids))
+        return {product.id: product for product in self.db.scalars(stmt).all()}
+
     def create(self, product: Product) -> Product:
         self.db.add(product)
         self.db.flush()

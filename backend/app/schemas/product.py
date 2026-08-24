@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.schemas.common import ORMBase
 
@@ -29,3 +29,20 @@ class ProductCatalogListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class StockUpdateRequest(BaseModel):
+    stock: int | None = Field(default=None, ge=0)
+
+
+class StockBulkItem(BaseModel):
+    product_id: int
+    stock: int | None = Field(default=None, ge=0)
+
+
+class StockBulkRequest(BaseModel):
+    items: list[StockBulkItem] = Field(min_length=1)
+
+
+class StockBulkResponse(BaseModel):
+    items: list[ProductRead]

@@ -18,11 +18,6 @@ import sys
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session, sessionmaker
-
-from app.core.config import settings
-
 # ---------------------------------------------------------------------------
 # Normalization (D5): strip, collapse whitespace, casefold; KEEP accents
 # ---------------------------------------------------------------------------
@@ -75,6 +70,46 @@ def parse_price(raw: str | None) -> tuple[Decimal | None, str | None]:
     return value, None
 
 
+def parse_stock(raw) -> tuple[int | None, str | None]:
+    """Parse a STOCK cell value.
+
+    Returns (value, flag). Blank/None → (None, None): null means
+    'no stock recorded' and is preserved as NULL. Integral floats are
+    accepted (openpyxl may yield 7.0 for 7). Fractional, negative or
+    textual values are flagged UNCLEAN and stored as NULL.
+    """
+    if raw is None:
+        return None, None
+
+    if isinstance(raw, bool):
+        return None, "UNCLEAN"
+
+    if isinstance(raw, int):
+        value = raw
+    elif isinstance(raw, float):
+        if not raw.is_integer():
+            return None, "UNCLEAN"
+        value = int(raw)
+    else:
+        text = str(raw).strip()
+        if not text or text.lower() in {"nan", "none", "null"}:
+            return None, None
+        try:
+            value = int(text)
+        except ValueError:
+            try:
+                as_float = float(text)
+            except ValueError:
+                return None, "UNCLEAN"
+            if not as_float.is_integer():
+                return None, "UNCLEAN"
+            value = int(as_float)
+
+    if value < 0:
+        return None, "UNCLEAN"
+    return value, None
+
+
 # ---------------------------------------------------------------------------
 # Header detection (D7): scan rows 1-3 for ARTICULO / FACTURA / LOCAL
 # ---------------------------------------------------------------------------
@@ -96,32 +131,36 @@ def detect_header(rows: list[tuple]) -> int | None:
 # Column mapping for header row
 # ---------------------------------------------------------------------------
 
-def find_columns(header_row: tuple) -> tuple[int, int, int]:
-    """Return 0-based column indices for ARTICULO, VALOR FACTURA, VALOR LOCAL."""
+def find_columns(header_row: tuple) -> tuple[int, int, int, int | None]:
+    """Return 0-based column indices for ARTICULO, VALOR FACTURA, VALOR LOCAL
+    and (optionally) STOCK. Missing STOCK column yields None."""
     names = [str(c).strip().casefold() if c else "" for c in header_row]
     art_col = next((i for i, n in enumerate(names) if "articulo" in n), None)
     fac_col = next((i for i, n in enumerate(names) if "factura" in n), None)
     loc_col = next((i for i, n in enumerate(names) if "local" in n), None)
+    stock_col = next((i for i, n in enumerate(names) if "stock" in n), None)
     if art_col is None or fac_col is None or loc_col is None:
         raise SystemExit(
             f"ERROR: Could not map columns from header: {header_row}\n"
             f"  art_col={art_col}, fac_col={fac_col}, loc_col={loc_col}"
         )
-    return art_col, fac_col, loc_col
+    return art_col, fac_col, loc_col, stock_col
 
 
 # ---------------------------------------------------------------------------
-# Main seed logic
+# Workbook parsing (pure — no DB access)
 # ---------------------------------------------------------------------------
 
-def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
-    """Execute the seed. Returns exit code (0 always — anomalies are findings)."""
+def parse_workbook(xlsx_path: str, sheet_name: str) -> tuple[list[dict], dict[str, list[str]]]:
+    """Parse the catalog sheet into deduped product dicts plus anomaly report.
+
+    Each parsed item: row_num, name, norm, invoice_price, local_price, stock.
+    """
     import openpyxl
 
     wb = openpyxl.load_workbook(xlsx_path, data_only=True, read_only=True)
     if sheet_name not in wb.sheetnames:
-        print(f"ERROR: Sheet '{sheet_name}' not found. Available: {wb.sheetnames}")
-        return 1
+        raise SystemExit(f"ERROR: Sheet '{sheet_name}' not found. Available: {wb.sheetnames}")
     ws = wb[sheet_name]
 
     # Read rows 1-3 for header detection
@@ -131,12 +170,15 @@ def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
         print("ERROR: Could not detect header in rows 1-3.")
         for i, row in enumerate(preview_rows, 1):
             print(f"  Row {i}: {row}")
-        return 1
+        raise SystemExit("ERROR: Could not detect header in rows 1-3.")
 
     header = preview_rows[header_row_idx - 1]
-    art_col, fac_col, loc_col = find_columns(header)
+    art_col, fac_col, loc_col, stock_col = find_columns(header)
     print(f"Header detected at row {header_row_idx}: {header}")
-    print(f"  ARTICULO=col {art_col}, VALOR FACTURA=col {fac_col}, VALOR LOCAL=col {loc_col}")
+    print(
+        f"  ARTICULO=col {art_col}, VALOR FACTURA=col {fac_col}, "
+        f"VALOR LOCAL=col {loc_col}, STOCK={'col ' + str(stock_col) if stock_col is not None else 'missing'}"
+    )
 
     # Collect all data rows (skip title row + header row)
     data_rows: list[tuple[int, tuple]] = []
@@ -153,6 +195,7 @@ def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
         name_raw = row[art_col] if art_col < len(row) else None
         fac_raw = row[fac_col] if fac_col < len(row) else None
         loc_raw = row[loc_col] if loc_col < len(row) else None
+        stock_raw = row[stock_col] if stock_col is not None and stock_col < len(row) else None
 
         if name_raw is None or not str(name_raw).strip():
             continue  # blank row — skip silently
@@ -174,6 +217,11 @@ def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
         if loc_flag:
             anomalies[loc_flag].append(f"Row {row_num}: {name_clean} (local: {loc_raw})")
 
+        # Parse stock (null stays null; invalid values flagged, stored NULL)
+        stock, stock_flag = parse_stock(stock_raw)
+        if stock_flag:
+            anomalies[stock_flag].append(f"Row {row_num}: {name_clean} (stock: {stock_raw})")
+
         # BLOCK CALCO: invoice > local anomaly
         if invoice_price is not None and local_price is not None and invoice_price > local_price:
             anomalies["BLOCK CALCO"].append(
@@ -194,6 +242,7 @@ def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
             "norm": norm,
             "invoice_price": invoice_price,
             "local_price": local_price,
+            "stock": stock,
         })
 
     # Deduplicate collisions — keep first occurrence
@@ -204,8 +253,73 @@ def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
             seen.add(item["norm"])
             deduped.append(item)
 
+    return deduped, anomalies
+
+
+# ---------------------------------------------------------------------------
+# DB upsert
+# ---------------------------------------------------------------------------
+
+def upsert_products(session, items: list[dict]) -> dict[str, int]:
+    """Upsert parsed catalog items by normalized name.
+
+    Prices always sync to the file; stock updates ONLY when the item carries
+    a value — a null STOCK cell must never wipe existing stock.
+    """
+    from sqlalchemy import select
+
+    from app.models.product import Product
+
+    existing = {normalize_name(p.name): p for p in session.scalars(select(Product)).all()}
+
+    created = 0
+    updated = 0
+    unchanged = 0
+
+    for item in items:
+        norm = item["norm"]
+        if norm in existing:
+            product = existing[norm]
+            changed = False
+            if product.invoice_price != item["invoice_price"]:
+                product.invoice_price = item["invoice_price"]
+                changed = True
+            if product.local_price != item["local_price"]:
+                product.local_price = item["local_price"]
+                changed = True
+            if item["stock"] is not None and product.stock_qty != item["stock"]:
+                product.stock_qty = item["stock"]
+                changed = True
+            if changed:
+                updated += 1
+            else:
+                unchanged += 1
+        else:
+            product = Product(
+                name=item["name"],
+                category_id=1,  # default category
+                invoice_price=item["invoice_price"],
+                local_price=item["local_price"],
+                currency_code="COP",
+                stock_qty=item["stock"],
+            )
+            session.add(product)
+            created += 1
+
+    session.commit()
+    return {"created": created, "updated": updated, "unchanged": unchanged}
+
+
+# ---------------------------------------------------------------------------
+# Main seed logic
+# ---------------------------------------------------------------------------
+
+def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
+    """Execute the seed. Returns exit code (0 always — anomalies are findings)."""
+    deduped, anomalies = parse_workbook(xlsx_path, sheet_name)
+
     # Summary before DB
-    print(f"\nParsed {len(deduped)} unique products from {len(data_rows)} rows")
+    print(f"\nParsed {len(deduped)} unique products")
     print(f"Anomaly sections:")
     for section in ["BLOCK CALCO", "MISSING", "PTE", "UNCLEAN", "COLLISION"]:
         items = anomalies.get(section, [])
@@ -221,54 +335,21 @@ def run_seed(xlsx_path: str, sheet_name: str, dry_run: bool) -> int:
     # Import models (requires app to be importable)
     sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
-    from app.db.base import Base
-    from app.models.product import Product
+    from sqlalchemy import create_engine, sessionmaker
 
-    engine = create_engine(settings.DATABASE_URL, future=True)
+    from app.core.config import settings as _settings
+
+    engine = create_engine(_settings.DATABASE_URL, future=True)
     SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
     with SessionLocal() as session:
-        # Load all existing products into memory
-        existing = {normalize_name(p.name): p for p in session.scalars(select(Product)).all()}
-
-        created = 0
-        updated = 0
-        unchanged = 0
-
-        for item in deduped:
-            norm = item["norm"]
-            if norm in existing:
-                product = existing[norm]
-                changed = False
-                if product.invoice_price != item["invoice_price"]:
-                    product.invoice_price = item["invoice_price"]
-                    changed = True
-                if product.local_price != item["local_price"]:
-                    product.local_price = item["local_price"]
-                    changed = True
-                if changed:
-                    updated += 1
-                else:
-                    unchanged += 1
-            else:
-                product = Product(
-                    name=item["name"],
-                    category_id=1,  # default category
-                    invoice_price=item["invoice_price"],
-                    local_price=item["local_price"],
-                    currency_code="COP",
-                    stock_qty=None,
-                )
-                session.add(product)
-                created += 1
-
-        session.commit()
+        counts = upsert_products(session, deduped)
 
     total_anomalies = sum(len(v) for v in anomalies.values())
     print(f"\nSeed complete:")
-    print(f"  Created: {created}")
-    print(f"  Updated: {updated}")
-    print(f"  Unchanged: {unchanged}")
+    print(f"  Created: {counts['created']}")
+    print(f"  Updated: {counts['updated']}")
+    print(f"  Unchanged: {counts['unchanged']}")
     print(f"  Anomalies: {total_anomalies}")
 
     return 0
