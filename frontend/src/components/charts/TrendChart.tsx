@@ -23,7 +23,7 @@ function getYAxisMax(preset?: PeriodPreset): number {
       return 1_000_000
     case 'month':
     case 'previous_month':
-      return 5_000_000
+      return 3_000_000
     case 'year':
     case 'all_time':
       return 15_000_000
