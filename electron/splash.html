@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Elite Intel</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #stage {
+        width: 260px;
+        height: 260px;
+        border-radius: 32px;
+        background: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      }
+
+      svg {
+        width: 160px;
+        height: 160px;
+        overflow: visible;
+      }
+
+      .fragment {
+        transform-box: fill-box;
+        transform-origin: center;
+        opacity: 0;
+      }
+
+      .stroke-fragment {
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* Each fragment gets its own scatter direction and timing offset so the
+         logo reads as deconstructing into pieces and reassembling, rather
+         than a uniform fade. */
+      #piece-a {
+        animation: assemble-a 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+      #piece-b {
+        animation: assemble-b 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+      #dot-1 {
+        animation: assemble-dot-1 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+      #dot-2 {
+        animation: assemble-dot-2 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+      #dot-3 {
+        animation: assemble-dot-3 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
+
+      @keyframes assemble-a {
+        0% { opacity: 0; transform: translate(-38px, -34px) rotate(-25deg) scale(0.6); }
+        45% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+        55% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+        100% { opacity: 0; transform: translate(38px, 34px) rotate(25deg) scale(0.6); }
+      }
+      @keyframes assemble-b {
+        0% { opacity: 0; transform: translate(42px, -30px) rotate(20deg) scale(0.6); }
+        45% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+        55% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+        100% { opacity: 0; transform: translate(-42px, 30px) rotate(-20deg) scale(0.6); }
+      }
+      @keyframes assemble-dot-1 {
+        0% { opacity: 0; transform: translate(-30px, 26px) scale(0.3); }
+        45% { opacity: 1; transform: translate(0, 0) scale(1); }
+        55% { opacity: 1; transform: translate(0, 0) scale(1); }
+        100% { opacity: 0; transform: translate(30px, -26px) scale(0.3); }
+      }
+      @keyframes assemble-dot-2 {
+        0% { opacity: 0; transform: translate(28px, 30px) scale(0.3); }
+        45% { opacity: 1; transform: translate(0, 0) scale(1); }
+        55% { opacity: 1; transform: translate(0, 0) scale(1); }
+        100% { opacity: 0; transform: translate(-28px, -30px) scale(0.3); }
+      }
+      @keyframes assemble-dot-3 {
+        0% { opacity: 0; transform: translate(-22px, -24px) scale(0.3); }
+        45% { opacity: 1; transform: translate(0, 0) scale(1); }
+        55% { opacity: 1; transform: translate(0, 0) scale(1); }
+        100% { opacity: 0; transform: translate(22px, 24px) scale(0.3); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          id="piece-a"
+          class="fragment stroke-fragment"
+          d="M35 15 L60 5 L80 20 L80 45 L60 55 L35 45 Z"
+          stroke="#00d4aa"
+          stroke-width="4"
+        />
+        <path
+          id="piece-b"
+          class="fragment stroke-fragment"
+          d="M55 45 L80 35 L100 50 L100 75 L80 85 L55 75 Z"
+          stroke="#22d3ee"
+          stroke-width="4"
+        />
+        <circle id="dot-1" class="fragment" cx="52" cy="30" r="5" fill="#00d4aa" />
+        <circle id="dot-2" class="fragment" cx="60" cy="50" r="6" fill="#22d3ee" />
+        <circle id="dot-3" class="fragment" cx="48" cy="45" r="4" fill="#00d4aa" />
+      </svg>
+    </div>
+    <script src="splash.js"></script>
+  </body>
+</html>

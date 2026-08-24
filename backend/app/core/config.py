@@ -16,6 +16,10 @@ class Settings:
     CATALOG_XLSX_PATH = Path(
         os.getenv("CATALOG_XLSX_PATH", "/app/data/raw/PRECIOS_PRODUCTOS_PAPELERIA.xlsx")
     )
+    # Directory holding the built frontend (frontend/dist). When set and present,
+    # the backend serves the dashboard itself so the Electron desktop build can
+    # load everything from a single origin (http://127.0.0.1:<port>/).
+    STATIC_DIR = os.getenv("STATIC_DIR")
 
 
 settings = Settings()

@@ -1,219 +1,35 @@
-# ELITE Intel - Business Dashboard
+# Elite Intel
 
-> Centralized financial tracking and analytics platform for small local businesses.
+Business dashboard for tracking income, expenses, and the product catalog.
 
-Replaces manual Excel workflows with a structured web dashboard.
-Tracks income, expenses, savings, and business performance in real-time.
+## Install
 
----
+1. Go to the PC where the app will run.
+2. Get the code:
+   - Clone via HTTPS: `git clone https://github.com/macreat/elite-intel.git`
+   - Or download the ZIP from GitHub and extract it.
+3. Double-click `install.bat` (or `install.sh` if `.sh` files are already
+   associated with Git Bash on this PC).
+4. Accept the one confirmation prompt. The installer then runs unattended:
+   it installs Node.js and Python if missing, installs dependencies, builds
+   the dashboard, packages `elite-intel.exe`, and creates a desktop shortcut.
+5. Launch the app from the `elite-intel` icon on the desktop.
 
-## Features
+## Data locations
 
-- **Kardex Import** - Upload Excel/CSV files and auto-detect categories
-- **Income Tracking** - Accesorios (40% profit), BeMovilRemote (volume only)
-- **Dashboard KPIs** - Income, expenses, net balance, savings rate
-- **Transaction History** - Filter by date, type, category, search
-- **Category Breakdown** - Pie charts for income and expenses
-- **Trend Charts** - Daily, weekly, monthly timeseries
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Frontend                            │
-│              React + TypeScript + Vite                  │
-│                  Tailwind CSS + Recharts                │
-└──────────────────────────┬──────────────────────────────┘
-                           │ HTTP / JSON
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                     Backend                             │
-│               FastAPI + Python 3.12                     │
-│                                                         │
-│  ┌──────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │   API    │  │   Services   │  │  Business Rules  │  │
-│  │  Routes  │→ │  Validation  │→ │  Import Logic    │  │
-│  └──────────┘  └──────────────┘  └──────────────────┘  │
-└──────────────────────────┬──────────────────────────────┘
-                           │ SQLAlchemy ORM
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Database                             │
-│                  PostgreSQL 15                          │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Docker & Docker Compose
-- Git
-
-### Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/your-org/eliteSystem.git
-cd eliteSystem/repository/elite-intel
-
-# Start all services
-docker compose up -d --build
-
-# Access the application
-open http://localhost:3002
-```
-
-### Services
-
-| Service    | URL                    | Description              |
-|------------|------------------------|--------------------------|
-| Frontend   | http://localhost:3002   | React dashboard          |
-| API Docs   | http://localhost:8080/docs | Swagger/OpenAPI docs  |
-| API        | http://localhost:8080   | FastAPI backend          |
-| Database   | localhost:5433         | PostgreSQL               |
-
----
-
-## API Endpoints
-
-### Dashboard
-
-| Method | Endpoint                        | Description                |
-|--------|---------------------------------|----------------------------|
-| GET    | `/api/v1/dashboard/summary`     | KPIs (income, expenses, net) |
-| GET    | `/api/v1/dashboard/timeseries`  | Daily/weekly/monthly trends |
-| GET    | `/api/v1/dashboard/categories`  | Category breakdown         |
-
-### Transactions
-
-| Method | Endpoint                         | Description              |
-|--------|----------------------------------|--------------------------|
-| GET    | `/api/v1/transactions`           | List (paginated, filtered) |
-| POST   | `/api/v1/transactions`           | Create transaction       |
-| GET    | `/api/v1/transactions/{id}`      | Get single transaction   |
-| PUT    | `/api/v1/transactions/{id}`      | Update transaction       |
-| DELETE | `/api/v1/transactions/{id}`      | Delete transaction       |
-
-### Import Pipeline
-
-| Method | Endpoint                          | Description              |
-|--------|-----------------------------------|--------------------------|
-| POST   | `/api/v1/imports/transactions`    | Upload CSV/XLSX file     |
-| POST   | `/api/v1/imports/{id}/mapping`    | Apply column mapping     |
-| POST   | `/api/v1/imports/{id}/confirm`    | Confirm and insert       |
-| GET    | `/api/v1/imports`                 | List import batches      |
-| GET    | `/api/v1/imports/{id}`            | Get batch details        |
-
-### Catalog
-
-| Method | Endpoint                    | Description              |
-|--------|-----------------------------|--------------------------|
-| GET    | `/api/v1/categories`        | List categories          |
-| POST   | `/api/v1/categories`        | Create category          |
-| PUT    | `/api/v1/categories/{id}`   | Update category          |
-| DELETE | `/api/v1/categories/{id}`   | Delete category          |
-| GET    | `/api/v1/products`          | List products            |
-| POST   | `/api/v1/products`          | Create product           |
-| GET    | `/api/v1/catalog`           | Product catalog search   |
-
----
-
-## Business Rules
-
-### Kardex Import
-
-- **Column B (BeMovilRemote)** - Header detected as `0` or `0.0` instead of "Be Movil"
-  - Tracked as volume only, excluded from income/net KPIs
-- **Accesorios** - Only 40% profit stored as income
-  - Gross amount saved in notes: `accesorios_gross=190000`
-  - Stored amount: `76000` (40% of gross)
-- **Ahorro mensual** - Treated as INCOME (not expense)
-- **Ahorro para pagar** - Treated as EXPENSE
-- **TOTALDAY** - Cumulative column, never stored as transactions
-- **Pendientes** - Stored as EXPENSE
-
-### Dashboard Defaults
-
-- **Period**: Current Week (not month)
-- **BeMovilRemote**: Excluded from income/net balance calculations
-- **Charts**: Y-axis max - Week: 1M, Month: 5M, Year: 15M
-
----
-
-## Directory Structure
-
-```
-elite-intel/
-├── backend/
-│   ├── app/
-│   │   ├── api/              # FastAPI routes
-│   │   ├── models/           # SQLAlchemy models
-│   │   ├── repositories/     # Data access layer
-│   │   ├── services/         # Business logic
-│   │   │   ├── import_service.py    # Kardex parser
-│   │   │   └── business_rules.py    # Income/expense rules
-│   │   └── db/               # Database setup
-│   ├── migrations/           # Alembic migrations
-│   ├── tests/                # pytest test suite
-│   └── data/raw/             # Raw CSV/XLSX files
-├── frontend/
-│   ├── src/
-│   │   ├── components/       # React components
-│   │   │   ├── charts/       # TrendChart, CategoryBreakdown
-│   │   │   ├── transactions/ # TransactionTable, forms
-│   │   │   └── filters/      # PeriodFilter, TransactionFilters
-│   │   ├── pages/            # DashboardPage, TransactionsPage
-│   │   ├── hooks/            # usePeriod, useAsyncData
-│   │   ├── services/         # API client
-│   │   └── utils/            # formatCurrency, period helpers
-│   └── nginx.conf            # Cache-busting config
-├── docker-compose.yml        # Container orchestration
-└── reference/docs/kardex/    # Source Excel files
-```
-
----
-
-## Tech Stack
-
-| Layer      | Technology                                    |
-|------------|-----------------------------------------------|
-| Frontend   | React 18, TypeScript, Vite, Tailwind CSS      |
-| Charts     | Recharts                                      |
-| Backend    | Python 3.12, FastAPI, Pydantic v2             |
-| ORM        | SQLAlchemy 2.0, Alembic                       |
-| Database   | PostgreSQL 15                                 |
-| DevOps     | Docker, Docker Compose                        |
-| Testing    | pytest, httpx                                 |
-
----
+- **Price catalog**: `backend/data/raw/PRECIOS_PRODUCTOS_PAPELERIA.xlsx`.
+  This spreadsheet is the source of truth for product prices. Stock and
+  price updates made in the app are written back to this same file, so it
+  always reflects the current catalog.
+- **2026 transactions**: tracked in the SQLite database at
+  `backend/elite.db` (the app's live database, created on first launch) and
+  mirrored to the ledger CSV at `backend/data/raw/2026-2.csv`. New
+  transactions registered in the app are saved to both.
 
 ## Development
 
-### Backend Tests
-
-```bash
-docker compose exec backend pytest tests/ -v
-```
-
-### Frontend Build
-
-```bash
-docker compose up -d --build frontend
-```
-
-### Database Migrations
-
-```bash
-docker compose exec backend alembic upgrade head
-```
-
----
-
-## License
-
-MIT License - Copyright (c) 2026
+See `backend/README.md` and `frontend/src/README.md` for API and dashboard
+development notes, and `docker-compose.yml` for the Docker-based development
+stack (Postgres + backend + frontend). The desktop build described above
+does not use Docker: it runs the backend directly with a local Python
+virtual environment and a SQLite database.

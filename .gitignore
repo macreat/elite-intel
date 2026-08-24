@@ -39,6 +39,9 @@ dist/
 dist-ssr/
 *.local
 
+# Electron build output
+electron/release/
+
 # IDEs & Editors
 .vscode/
 .idea/
@@ -50,6 +53,7 @@ dist-ssr/
 # Database & Data
 *.sqlite
 *.sqlite3
+*.db
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*

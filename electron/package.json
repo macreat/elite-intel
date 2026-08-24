@@ -1,0 +1,72 @@
+{
+  "name": "elite-intel",
+  "version": "1.0.0",
+  "description": "Elite Intel desktop app",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.eliteintel.desktop",
+    "productName": "elite-intel",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "splash.html",
+      "splash.js",
+      "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!__pycache__",
+          "!**/__pycache__",
+          "!.pytest_cache",
+          "!tests",
+          "!*.db",
+          "!dev_import.db",
+          "!elite.db",
+          "!data/kardex_august.csv",
+          "!data/kardex_august.xlsx",
+          "!data/kardex_full.xlsx",
+          "!import_august.py",
+          "!import_august_fixed.py",
+          "!full_reset_import.py"
+        ]
+      },
+      {
+        "from": "../frontend/dist",
+        "to": "frontend/dist"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "elite-intel-Setup-${version}.${ext}"
+    }
+  }
+}

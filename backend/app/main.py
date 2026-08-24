@@ -1,6 +1,9 @@
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1 import catalog, categories, dashboard, imports, products, transactions
 from app.core.config import settings
@@ -41,3 +44,21 @@ app.include_router(categories.router, prefix=settings.API_V1_PREFIX)
 app.include_router(products.router, prefix=settings.API_V1_PREFIX)
 app.include_router(dashboard.router, prefix=settings.API_V1_PREFIX)
 app.include_router(catalog.router, prefix=settings.API_V1_PREFIX)
+
+if settings.STATIC_DIR:
+    static_dir = Path(settings.STATIC_DIR)
+    if static_dir.is_dir():
+        assets_dir = static_dir / "assets"
+        if assets_dir.is_dir():
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+        @app.get("/runtime-config.js")
+        def runtime_config():
+            return FileResponse(static_dir / "runtime-config.js")
+
+        @app.get("/{full_path:path}")
+        def serve_frontend(full_path: str):
+            candidate = static_dir / full_path
+            if full_path and candidate.is_file():
+                return FileResponse(candidate)
+            return FileResponse(static_dir / "index.html")
