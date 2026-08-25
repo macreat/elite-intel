@@ -18,9 +18,9 @@ function EliteLogo() {
       {/* Top hexagon — overlaps down into the two bottom ones */}
       <path d="M50 30 L61.5 36.6 L61.5 49.8 L50 56.4 L38.5 49.8 L38.5 36.6 Z" fill="none" stroke="#00D4AA" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
       {/* Dots */}
-      <circle cx="38" cy="58" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
-      <circle cx="62" cy="58" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
-      <circle cx="50" cy="46.5" r="4.0" fill="#7EEAD4" stroke="white" strokeWidth="0.35" />
+      <circle cx="38" cy="48" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
+      <circle cx="62" cy="48" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
+      <circle cx="50" cy="56.4" r="4.0" fill="#7EEAD4" stroke="white" strokeWidth="0.35" />
     </svg>
   )
 }
