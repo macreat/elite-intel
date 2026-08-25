@@ -45,20 +45,43 @@ app.include_router(products.router, prefix=settings.API_V1_PREFIX)
 app.include_router(dashboard.router, prefix=settings.API_V1_PREFIX)
 app.include_router(catalog.router, prefix=settings.API_V1_PREFIX)
 
-if settings.STATIC_DIR:
-    static_dir = Path(settings.STATIC_DIR)
-    if static_dir.is_dir():
-        assets_dir = static_dir / "assets"
-        if assets_dir.is_dir():
-            app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+def _resolve_static_dir(configured_static_dir=None, backend_root=None):
+    candidates = []
+    if configured_static_dir is None:
+        configured_static_dir = settings.STATIC_DIR
+    if backend_root is None:
+        backend_root = Path(__file__).resolve().parents[2]
 
-        @app.get("/runtime-config.js")
-        def runtime_config():
-            return FileResponse(static_dir / "runtime-config.js")
+    if configured_static_dir:
+        candidates.append(Path(configured_static_dir))
 
-        @app.get("/{full_path:path}")
-        def serve_frontend(full_path: str):
-            candidate = static_dir / full_path
-            if full_path and candidate.is_file():
-                return FileResponse(candidate)
-            return FileResponse(static_dir / "index.html")
+    backend_root_parent = backend_root.parent
+    candidates.append(backend_root_parent / "frontend" / "dist")
+    candidates.append(backend_root_parent.parent / "frontend" / "dist")
+
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def _register_frontend_routes(target_app: FastAPI, static_dir: Path):
+    assets_dir = static_dir / "assets"
+    if assets_dir.is_dir():
+        target_app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @target_app.get("/runtime-config.js")
+    def runtime_config():
+        return FileResponse(static_dir / "runtime-config.js")
+
+    @target_app.get("/{full_path:path}")
+    def serve_frontend(full_path: str):
+        candidate = static_dir / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(static_dir / "index.html")
+
+
+static_dir = _resolve_static_dir()
+if static_dir:
+    _register_frontend_routes(app, static_dir)

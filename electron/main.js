@@ -2,12 +2,10 @@ const { app, BrowserWindow } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const http = require('http')
+const net = require('net')
 const { spawn } = require('child_process')
 
 const BACKEND_HOST = '127.0.0.1'
-const BACKEND_PORT = 8000
-const BACKEND_URL = `http://${BACKEND_HOST}:${BACKEND_PORT}`
-const HEALTH_URL = `${BACKEND_URL}/health`
 const HEALTH_TIMEOUT_MS = 60000
 const HEALTH_POLL_INTERVAL_MS = 400
 
@@ -44,6 +42,32 @@ function resolvePythonExecutable(backendDir) {
   return process.platform === 'win32' ? 'python' : 'python3'
 }
 
+function buildBackendUrl(port) {
+  return `http://${BACKEND_HOST}:${port}`
+}
+
+function findAvailablePort(host) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer()
+    server.unref()
+    server.on('error', reject)
+    server.listen(0, host, () => {
+      const address = server.address()
+      if (!address || typeof address === 'string') {
+        server.close(() => reject(new Error('Unable to acquire backend port')))
+        return
+      }
+      server.close((err) => {
+        if (err) {
+          reject(err)
+          return
+        }
+        resolve(address.port)
+      })
+    })
+  })
+}
+
 function createSplashWindow() {
   splashWindow = new BrowserWindow({
     width: 420,
@@ -69,7 +93,7 @@ function createSplashWindow() {
   })
 }
 
-function createMainWindow() {
+function createMainWindow(backendUrl) {
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -81,7 +105,7 @@ function createMainWindow() {
     },
   })
 
-  mainWindow.loadURL(BACKEND_URL)
+  mainWindow.loadURL(backendUrl)
   mainWindow.once('ready-to-show', () => {
     if (splashWindow) {
       splashWindow.close()
@@ -112,10 +136,10 @@ function runBootstrap(pythonExe, backendDir, env) {
   })
 }
 
-function startBackendServer(pythonExe, backendDir, env) {
+function startBackendServer(pythonExe, backendDir, env, backendPort) {
   backendProcess = spawn(
     pythonExe,
-    ['-m', 'uvicorn', 'app.main:app', '--host', BACKEND_HOST, '--port', String(BACKEND_PORT)],
+    ['-m', 'uvicorn', 'app.main:app', '--host', BACKEND_HOST, '--port', String(backendPort)],
     { cwd: backendDir, env },
   )
   backendProcess.stdout.on('data', (chunk) => process.stdout.write(`[backend] ${chunk}`))
@@ -129,10 +153,10 @@ function startBackendServer(pythonExe, backendDir, env) {
   })
 }
 
-function waitForHealth(deadline) {
+function waitForHealth(healthUrl, deadline) {
   return new Promise((resolve, reject) => {
     const attempt = () => {
-      const req = http.get(HEALTH_URL, (res) => {
+      const req = http.get(healthUrl, (res) => {
         res.resume()
         if (res.statusCode === 200) {
           resolve()
@@ -159,11 +183,14 @@ async function boot() {
   const backendDir = resolveBackendDir()
   const staticDir = resolveStaticDir()
   const pythonExe = resolvePythonExecutable(backendDir)
+  const backendPort = await findAvailablePort(BACKEND_HOST)
+  const backendUrl = buildBackendUrl(backendPort)
+  const healthUrl = `${backendUrl}/health`
 
   const env = {
     ...process.env,
     STATIC_DIR: staticDir,
-    FRONTEND_ORIGIN: BACKEND_URL,
+    FRONTEND_ORIGIN: backendUrl,
     DATABASE_URL: `sqlite:///${path.join(backendDir, 'elite.db').replace(/\\/g, '/')}`,
     CATALOG_XLSX_PATH: path.join(backendDir, 'data', 'raw', 'PRECIOS_PRODUCTOS_PAPELERIA.xlsx'),
     PERSIST_TRANSACTIONS_CSV: path.join(backendDir, 'data', 'raw', '2026-2.csv'),
@@ -172,9 +199,9 @@ async function boot() {
 
   try {
     await runBootstrap(pythonExe, backendDir, env)
-    startBackendServer(pythonExe, backendDir, env)
-    await waitForHealth(Date.now() + HEALTH_TIMEOUT_MS)
-    createMainWindow()
+    startBackendServer(pythonExe, backendDir, env, backendPort)
+    await waitForHealth(healthUrl, Date.now() + HEALTH_TIMEOUT_MS)
+    createMainWindow(backendUrl)
   } catch (err) {
     console.error('Failed to start Elite Intel:', err)
     app.quit()
