@@ -1,81 +1,229 @@
+<div align="center">
+
+<img src="docs/images/endpoints/iconCharge.png" alt="Elite Intel" width="90" />
+
 # Elite Intel
 
-Elite Intel es un panel de control de escritorio on-premise para la gestión operativa y financiera del negocio.
-Centraliza ingresos, egresos, indicadores de ahorro y catálogo con precios y existencias en una sola aplicación.
-Está construido con FastAPI, React y Electron y persiste los datos localmente en SQLite por equipo, sin dependencia de nube ni suscripciones.
+**Desktop business intelligence for a Colombian stationery store - zero cloud, zero subscriptions.**
 
-> Presentación institucional para cliente: [Ver presentación para cliente](docs/presentation.html).
+Financial KPIs, product catalog, transaction management, and Excel bidirectional sync in a one-click Electron app powered by FastAPI + React + SQLite.
 
-## Características principales
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-3776AB.svg)](https://python.org)
+[![React 19](https://img.shields.io/badge/react-19-61DAFB.svg)](https://react.dev)
+[![Electron](https://img.shields.io/badge/electron-33-47848F.svg)](https://electronjs.org)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078D4.svg)]()
 
-- **Dashboard con KPIs financieros** en tiempo real: ingresos, egresos, balance neto, ahorro estimado y tasa de ahorro del período.
-- **Catálogo operativo** con 148 artículos de referencia: alta, edición, filtros y control de estado activo.
-- **Actualización masiva de existencias** (`POST /products/stock/bulk`) con transacción atómica desde una vista consolidada.
-- **Administración masiva de precios** (`POST /products/prices/bulk`) y edición puntual (`PATCH /products/{id}`).
-- **Sincronización bidireccional con Excel**: todo cambio de precio o stock se replica en `PRECIOS_PRODUCTOS_PAPELERIA.xlsx` conservando su estructura original.
-- **Series temporales** por día, semana y mes (`GET /dashboard/timeseries`) y desglose por categorías (`GET /dashboard/categories`).
-- **Períodos configurables** con soporte de zona horaria y validación de rangos.
-- **Instalación de escritorio** en Windows con un solo ejecutable (`elite-intel.exe`) y acceso directo en el escritorio, sin requerir conectividad.
+</div>
 
-## Stack tecnológico
+---
 
-`FastAPI · React · Electron · SQLite (por equipo) · Python 3.12 · Node 20`.
-En desarrollo se utiliza `docker-compose.yml` con Postgres, backend y frontend.
-En producción de escritorio el backend corre con entorno virtual Python local y base SQLite.
+## Visual Gallery
 
-## API — Endpoints principales
+<details open>
+<summary><strong>Dashboard - Financial KPIs &amp; Analytics</strong></summary>
+<br>
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/dashboard/summary` | Resumen financiero del período (ingresos, egresos, balance, ahorro y tasa). |
-| GET | `/dashboard/categories` | Desglose por categorías con filtro opcional por tipo. |
-| GET | `/dashboard/timeseries` | Serie temporal por `day`, `week` o `month`. |
-| GET | `/products` | Lista de productos con filtros por categoría y estado. |
-| POST | `/products` | Crea un producto. |
-| PATCH | `/products/{id}` | Actualiza nombre y precios de un producto. |
-| GET | `/products/{id}` | Obtiene un producto por id. |
-| PATCH | `/products/{id}/stock` | Actualiza el stock de un producto. |
-| POST | `/products/stock/bulk` | Actualización masiva de existencias. |
-| POST | `/products/prices/bulk` | Actualización masiva de precios. |
-| GET | `/transactions` | Lista paginada con filtros por fecha, tipo, categoría y búsqueda. |
-| POST | `/transactions` | Crea una transacción. |
-| GET | `/transactions/{id}` | Obtiene una transacción. |
-| PUT | `/transactions/{id}` | Actualiza una transacción. |
-| DELETE | `/transactions/{id}` | Elimina una transacción. |
-| GET | `/categories` | Lista de categorías con filtro por tipo y estado. |
-| POST | `/categories` | Crea una categoría. |
-| PUT | `/categories/{id}` | Actualiza una categoría. |
-| DELETE | `/categories/{id}` | Desactiva una categoría (borrado lógico). |
+![Dashboard with KPIs, category breakdown, and time series chart](docs/images/endpoints/1.png)
 
-Documentación detallada en `docs/api/` y especificación OpenAPI en `docs/api/openapi.json`.
+> Real-time financial summary: income, expenses, net balance, savings rate, and time series by day/week/month.
 
-## Capturas — API en funcionamiento
+</details>
 
-![Elite Intel Dashboard](docs/images/endpoints/1.png)
+<details>
+<summary><strong>Product Catalog - Stock &amp; Price Management</strong></summary>
+<br>
 
-*Dashboard operativo en producción con KPIs, desglose por categorías y serie temporal verificables contra la base local.*
+![Product catalog with stock and price management](docs/images/endpoints/2.png)
 
-## Instalación
+> 148 articles with search, filters, bulk stock updates, and per-item price editing.
 
-1. Vaya al equipo donde se ejecutará la aplicación.
-2. Obtenga el código:
-   - Clone por HTTPS: `git clone https://github.com/macreat/elite-intel.git`
-   - O descargue el ZIP desde GitHub y descomprímalo.
-3. Asegúrese de que el proyecto quede en una carpeta local de Windows (por ejemplo `C:\elite-intel`), no en una ruta de red como `\\wsl.localhost\...`.
-4. Haga doble clic en `install.bat` (o en `install.sh` si los archivos `.sh` ya están asociados a Git Bash en ese equipo).
-5. Acepte la única confirmación solicitada.
-   Luego el instalador continúa de forma desatendida: instala Node.js y Python si faltan, instala dependencias, compila el panel, empaqueta `elite-intel.exe` y crea el acceso directo en el escritorio.
-6. Inicie la aplicación desde el ícono `elite-intel` en el escritorio.
+</details>
 
-## Ubicación de datos
+<details>
+<summary><strong>Excel Bidirectional Sync</strong></summary>
+<br>
 
-- **Catálogo de precios**: `backend/data/raw/PRECIOS_PRODUCTOS_PAPELERIA.xlsx`.
-  Esta planilla es la fuente de verdad para los precios de productos.
-  Las actualizaciones de stock y precios realizadas en la aplicación se escriben de vuelta en este mismo archivo, por lo que siempre refleja el catálogo vigente.
-- **Transacciones 2026**: se registran en la base SQLite en `backend/elite.db` (base de producción de la aplicación, creada en el primer inicio) y se replican en el CSV de libro diario en `backend/data/raw/2026-2.csv`.
-  Cada transacción nueva registrada en la aplicación se guarda en ambos destinos.
+![Excel bidirectional sync](docs/images/endpoints/3.png)
 
-## Desarrollo
+> Every price or stock change syncs back to `PRECIOS_PRODUCTOS_PAPELERIA.xlsx`, preserving the original spreadsheet structure.
 
-Consulte `backend/README.md` y `frontend/src/README.md` para notas de desarrollo de API y panel, y `docker-compose.yml` para el stack de desarrollo basado en Docker (Postgres + backend + frontend).
-El build de escritorio descrito arriba no utiliza Docker: ejecuta el backend directamente con un entorno virtual Python local y base de datos SQLite.
+</details>
+
+<details>
+<summary><strong>Transaction Management</strong></summary>
+<br>
+
+![Transaction management with filters](docs/images/endpoints/4.png)
+
+> Paginated list with date range, type, category, and text search filters.
+
+</details>
+
+<details>
+<summary><strong>Add Transaction Form</strong></summary>
+<br>
+
+![Add Transaction form with categories](docs/images/endpoints/5.png)
+
+> Quick entry with category picker and built-in validation.
+
+</details>
+
+---
+
+## Features
+
+| Area | Capability | Detail |
+|------|-----------|--------|
+| **Dashboard** | Financial KPIs | Income, expenses, net balance, estimated savings, savings rate |
+| **Dashboard** | Time Series | Day, week, or month granularity via `GET /dashboard/timeseries` |
+| **Dashboard** | Category Breakdown | Revenue and expense distribution across categories |
+| **Catalog** | 148 Articles | Full CRUD with active/inactive state toggle |
+| **Catalog** | Bulk Stock Update | Atomic `POST /products/stock/bulk` from consolidated view |
+| **Catalog** | Bulk Price Update | Atomic `POST /products/prices/bulk` or per-item `PATCH` |
+| **Transactions** | Full CRUD | Create, read, update, delete with validation |
+| **Transactions** | Advanced Filters | Date range, type, category, free-text search |
+| **Data Sync** | Excel Bidirectional | Writes changes back to the source `.xlsx` automatically |
+| **Data Sync** | CSV Replication | Transactions replicate to `2026-2.csv` journal |
+| **Desktop** | One-Click Install | `install.bat` handles Node, Python, dependencies, build |
+| **Desktop** | Offline by Design | SQLite per machine, no internet required |
+
+---
+
+## Quick Start
+
+### Option A - One-Click Install (Windows)
+
+1. Clone or download the repo to a local Windows folder (e.g. `C:\elite-intel`).
+   > Do **not** run from a network path like `\\wsl.localhost\...`.
+
+2. Double-click **`install.bat`**.
+
+3. Accept the single confirmation prompt.
+
+   The installer runs unattended:
+   - Installs Node.js and Python if missing
+   - Installs all dependencies
+   - Builds the frontend
+   - Packages `elite-intel.exe`
+   - Creates a desktop shortcut
+
+4. Launch **Elite Intel** from the desktop icon.
+
+### Option B - From Source
+
+```bash
+git clone https://github.com/macreat/elite-intel.git
+cd elite-intel
+
+# Backend
+cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+
+# Frontend
+cd ../frontend
+npm install
+npm run dev
+```
+
+For Docker-based development (Postgres + backend + frontend), see `docker-compose.yml`.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                  Electron Shell                  │
+│  ┌──────────────┐       ┌────────────────────┐  │
+│  │  React SPA   │◄─────►│   FastAPI Backend  │  │
+│  │  (Vite dev / │  HTTP │   (uvicorn)        │  │
+│  │   built)     │       │                    │  │
+│  └──────────────┘       └────────┬───────────┘  │
+│                                  │               │
+│                    ┌─────────────▼────────────┐  │
+│                    │       SQLite DB          │  │
+│                    │     (elite.db)           │  │
+│                    └─────────────┬────────────┘  │
+│                                  │               │
+│                    ┌─────────────▼────────────┐  │
+│                    │   Excel / CSV Sync       │  │
+│                    │  PRECIOS_PRODUCTOS_...   │  │
+│                    └──────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+```
+
+**Development** uses Docker Compose with PostgreSQL. **Production** runs the backend with a local Python venv and SQLite - no containers, no cloud.
+
+---
+
+## API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/dashboard/summary` | Financial summary for a period |
+| `GET` | `/dashboard/categories` | Revenue/expense breakdown by category |
+| `GET` | `/dashboard/timeseries` | Time series (`day`, `week`, `month`) |
+| `GET` | `/products` | Product list with category and state filters |
+| `POST` | `/products` | Create a product |
+| `PATCH` | `/products/{id}` | Update product name and prices |
+| `GET` | `/products/{id}` | Get product by ID |
+| `PATCH` | `/products/{id}/stock` | Update stock for one product |
+| `POST` | `/products/stock/bulk` | Bulk stock update (atomic) |
+| `POST` | `/products/prices/bulk` | Bulk price update (atomic) |
+| `GET` | `/transactions` | Paginated transactions with filters |
+| `POST` | `/transactions` | Create a transaction |
+| `GET` | `/transactions/{id}` | Get transaction by ID |
+| `PUT` | `/transactions/{id}` | Update a transaction |
+| `DELETE` | `/transactions/{id}` | Delete a transaction |
+| `GET` | `/categories` | Category list with type filter |
+| `POST` | `/categories` | Create a category |
+| `PUT` | `/categories/{id}` | Update a category |
+| `DELETE` | `/categories/{id}` | Soft-delete (deactivate) a category |
+
+Full OpenAPI spec at [`docs/api/openapi.json`](docs/api/openapi.json).
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| **Runtime** | Electron | Ship as a native `.exe` with bundled backend |
+| **Frontend** | React 19 + Vite | Fast HMR in dev, optimized static build for prod |
+| **Backend** | FastAPI (Python 3.12) | Async, auto-generated OpenAPI docs, type-safe |
+| **Database** | SQLite | Zero-config, per-machine, portable, no server |
+| **Data Sync** | openpyxl + csv | Read/write Excel in-place, CSV journal replication |
+| **Packaging** | PyInstaller | Single executable, no Python install required end-user |
+
+---
+
+## Data Locations
+
+| File | Purpose |
+|------|---------|
+| `backend/data/raw/PRECIOS_PRODUCTOS_PAPELERIA.xlsx` | Source-of-truth price catalog. Written back by the app on every change. |
+| `backend/elite.db` | SQLite production database (created on first run) |
+| `backend/data/raw/2026-2.csv` | Journal CSV - transactions replicate here automatically |
+
+---
+
+## Development
+
+- **Backend docs**: `backend/README.md`
+- **Frontend notes**: `frontend/src/README.md`
+- **Docker stack**: `docker-compose.yml` (Postgres + API + frontend)
+- **API spec**: `docs/api/openapi.json`
+- **Client presentation**: `docs/presentation.html`
+
+---
+
+<div align="center">
+
+**Elite Intel** - Built for a specific business, designed to work without the cloud.
+
+</div>
