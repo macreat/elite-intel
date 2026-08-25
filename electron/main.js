@@ -187,11 +187,21 @@ async function boot() {
   const backendUrl = buildBackendUrl(backendPort)
   const healthUrl = `${backendUrl}/health`
 
+  // Keep the database in the OS userData directory so reinstalls/updates never wipe it.
+  const userDataDir = app.getPath('userData')
+  fs.mkdirSync(userDataDir, { recursive: true })
+  const dbPath = path.join(userDataDir, 'elite.db')
+  // One-time migration: if a pre-existing database lives inside the (replaceable) install dir, move it.
+  const legacyDbPath = path.join(backendDir, 'elite.db')
+  if (!fs.existsSync(dbPath) && fs.existsSync(legacyDbPath)) {
+    fs.copyFileSync(legacyDbPath, dbPath)
+  }
+
   const env = {
     ...process.env,
     STATIC_DIR: staticDir,
     FRONTEND_ORIGIN: backendUrl,
-    DATABASE_URL: `sqlite:///${path.join(backendDir, 'elite.db').replace(/\\/g, '/')}`,
+    DATABASE_URL: `sqlite:///${dbPath.replace(/\\/g, '/')}`,
     CATALOG_XLSX_PATH: path.join(backendDir, 'data', 'raw', 'PRECIOS_PRODUCTOS_PAPELERIA.xlsx'),
     PERSIST_TRANSACTIONS_CSV: path.join(backendDir, 'data', 'raw', '2026-2.csv'),
     PYTHONUNBUFFERED: '1',
