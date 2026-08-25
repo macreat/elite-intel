@@ -94,7 +94,7 @@ export function StockBulkModal({ open, onClose, onApplied }: StockBulkModalProps
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="flex max-h-[24vh] w-[clamp(220px,18vw,12rem)] flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-1.5 shadow-xl"
+        className="flex max-h-[60vh] w-[clamp(520px,55vw,32rem)] flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-3 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2">
