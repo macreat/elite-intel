@@ -84,7 +84,7 @@ export function StockBulkModal({ open, onClose, onApplied }: StockBulkModalProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-5 shadow-xl">
+      <div className="flex max-h-[55vh] w-full max-w-md flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-4 shadow-xl">
         <h3 className="text-lg font-semibold text-white">Change stock</h3>
         <p className="mt-1 text-sm text-slate-400">
           Set the stock for each article. Empty means leave it unchanged. Applies to every edited article in a single save.
