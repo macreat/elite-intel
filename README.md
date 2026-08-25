@@ -8,12 +8,14 @@ Business dashboard for tracking income, expenses, and the product catalog.
 2. Get the code:
    - Clone via HTTPS: `git clone https://github.com/macreat/elite-intel.git`
    - Or download the ZIP from GitHub and extract it.
-3. Double-click `install.bat` (or `install.sh` if `.sh` files are already
+3. Make sure the project is in a local Windows folder (for example
+   `C:\elite-intel`), not a network path such as `\\wsl.localhost\...`.
+4. Double-click `install.bat` (or `install.sh` if `.sh` files are already
    associated with Git Bash on this PC).
-4. Accept the one confirmation prompt. The installer then runs unattended:
+5. Accept the one confirmation prompt. The installer then runs unattended:
    it installs Node.js and Python if missing, installs dependencies, builds
    the dashboard, packages `elite-intel.exe`, and creates a desktop shortcut.
-5. Launch the app from the `elite-intel` icon on the desktop.
+6. Launch the app from the `elite-intel` icon on the desktop.
 
 ## Data locations
 
