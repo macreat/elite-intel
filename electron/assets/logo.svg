@@ -1,8 +1,52 @@
 <svg width="256" height="256" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="100" height="100" rx="18" fill="#0f172a" />
-  <path d="M35 15 L60 5 L80 20 L80 45 L60 55 L35 45 Z" stroke="#00d4aa" stroke-width="4" fill="none" />
-  <path d="M55 45 L80 35 L100 50 L100 75 L80 85 L55 75 Z" stroke="#22d3ee" stroke-width="4" fill="none" />
-  <circle cx="52" cy="30" r="5" fill="#00d4aa" />
-  <circle cx="60" cy="50" r="6" fill="#22d3ee" />
-  <circle cx="48" cy="45" r="4" fill="#00d4aa" />
+  <rect width="100" height="100" rx="18" fill="#0B1426"/>
+  <defs>
+    <linearGradient id="shieldFill" x1="50" y1="10" x2="50" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#162A4A"/>
+      <stop offset="100%" stop-color="#0B1C32"/>
+    </linearGradient>
+    <linearGradient id="celesteStroke" x1="50" y1="18" x2="50" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5EEAD4"/>
+      <stop offset="100%" stop-color="#00C2A8"/>
+    </linearGradient>
+    <linearGradient id="darkBlueStroke" x1="36" y1="44" x2="36" y2="66" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2A5A8A"/>
+      <stop offset="100%" stop-color="#0F2D4A"/>
+    </linearGradient>
+    <linearGradient id="darkBlueStroke2" x1="64" y1="44" x2="64" y2="66" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2A5A8A"/>
+      <stop offset="100%" stop-color="#0F2D4A"/>
+    </linearGradient>
+    <radialGradient id="dotCeleste" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#A7F3E8"/>
+      <stop offset="100%" stop-color="#00D4AA"/>
+    </radialGradient>
+    <radialGradient id="dotDark" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#3A6EA5"/>
+      <stop offset="100%" stop-color="#0F2D4A"/>
+    </radialGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="0.6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <!-- Shield emblem -->
+  <path d="M50 10 L76 21 L76 54 L50 86 L24 54 L24 21 Z" fill="url(#shieldFill)" stroke="rgba(180,200,225,0.18)" stroke-width="0.9" />
+  <path d="M50 12.5 L74 22.5 L74 53 L50 83.5 L26 53 L26 22.5 Z" fill="none" stroke="rgba(94,234,212,0.18)" stroke-width="0.7"/>
+  <!-- Top hexagon — verde celeste (single) -->
+  <path d="M50 20.5 L59.2 25.9 L59.2 36.6 L50 42 L40.8 36.6 L40.8 25.9 Z" fill="none" stroke="url(#celesteStroke)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Bottom-left hexagon — azul oscuro -->
+  <path d="M36 43.2 L45.2 48.6 L45.2 59.3 L36 64.7 L26.8 59.3 L26.8 48.6 Z" fill="none" stroke="url(#darkBlueStroke)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Bottom-right hexagon — azul oscuro -->
+  <path d="M64 43.2 L73.2 48.6 L73.2 59.3 L64 64.7 L54.8 59.3 L54.8 48.6 Z" fill="none" stroke="url(#darkBlueStroke2)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Central connectors (thin) -->
+  <g opacity="0.55">
+    <line x1="50" y1="44.2" x2="46.5" y2="49.8" stroke="#3A6A8A" stroke-width="0.6"/>
+    <line x1="50" y1="44.2" x2="53.5" y2="49.8" stroke="#3A6A8A" stroke-width="0.6"/>
+    <line x1="45.2" y1="51.5" x2="54.8" y2="51.5" stroke="#3A6A8A" stroke-width="0.6"/>
+  </g>
+  <!-- Three points -->
+  <circle cx="50" cy="41.5" r="4.2" fill="url(#dotCeleste)" stroke="rgba(255,255,255,0.85)" stroke-width="0.4"/>
+  <circle cx="43.8" cy="52.2" r="3.9" fill="url(#dotDark)" stroke="rgba(255,255,255,0.18)" stroke-width="0.4"/>
+  <circle cx="56.2" cy="52.2" r="3.9" fill="url(#dotDark)" stroke="rgba(255,255,255,0.18)" stroke-width="0.4"/>
 </svg>

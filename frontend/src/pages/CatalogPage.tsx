@@ -18,9 +18,7 @@ export function CatalogPage() {
     const stored = localStorage.getItem('elite:catalog-prices-visible')
     return stored === null ? false : stored === 'true'
   })
-  const [stockModalOpen, setStockModalOpen] = useState(false)
-  const [addProductOpen, setAddProductOpen] = useState(false)
-  const [updatePricesOpen, setUpdatePricesOpen] = useState(false)
+  const [activeModal, setActiveModal] = useState<'stock' | 'add' | 'prices' | null>(null)
   const page_size = 20
 
   const togglePrices = () => {
@@ -56,21 +54,21 @@ export function CatalogPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setStockModalOpen(true)}
+            onClick={() => setActiveModal('stock')}
             className="btn-secondary text-sm"
           >
             Change stock
           </button>
           <button
             type="button"
-            onClick={() => setAddProductOpen(true)}
+            onClick={() => setActiveModal('add')}
             className="btn-secondary text-sm"
           >
             Add product
           </button>
           <button
             type="button"
-            onClick={() => setUpdatePricesOpen(true)}
+            onClick={() => setActiveModal('prices')}
             className="btn-secondary text-sm"
           >
             Update prices
@@ -169,23 +167,16 @@ export function CatalogPage() {
       ) : null}
 
       <StockBulkModal
-        open={stockModalOpen}
-        onClose={() => setStockModalOpen(false)}
+        open={activeModal === 'stock'}
+        onClose={() => setActiveModal(null)}
         onApplied={() => setReloadKey((k) => k + 1)}
       />
 
       <InventoryModal
-        open={addProductOpen}
-        onClose={() => setAddProductOpen(false)}
+        open={activeModal === 'add' || activeModal === 'prices'}
+        onClose={() => setActiveModal(null)}
         onApplied={() => setReloadKey((k) => k + 1)}
-        initialTab="add"
-      />
-
-      <InventoryModal
-        open={updatePricesOpen}
-        onClose={() => setUpdatePricesOpen(false)}
-        onApplied={() => setReloadKey((k) => k + 1)}
-        initialTab="prices"
+        initialTab={activeModal === 'prices' ? 'prices' : 'add'}
       />
     </div>
   )
