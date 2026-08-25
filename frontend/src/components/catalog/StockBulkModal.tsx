@@ -84,7 +84,7 @@ export function StockBulkModal({ open, onClose, onApplied }: StockBulkModalProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="flex max-h-[40vh] w-full max-w-xs flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-3 shadow-xl">
+      <div className="flex max-h-[40vh] w-[clamp(300px,30vw,26rem)] flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-3 shadow-xl">
         <h3 className="text-sm font-semibold text-white">Change stock</h3>
 
         {loading ? <LoadingState message="Loading catalog..." /> : null}
