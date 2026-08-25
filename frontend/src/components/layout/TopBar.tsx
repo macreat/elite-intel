@@ -10,23 +10,19 @@ const navItems = [
 
 function EliteLogo() {
   return (
-    <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Top — verde celeste */}
+    <svg width="48" height="48" viewBox="20 10 60 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Bottom-left hexagon — overlaps into center */}
+      <path d="M38 46.5 L49.5 53.1 L49.5 66.3 L38 72.9 L26.5 66.3 L26.5 53.1 Z" fill="rgba(15,45,74,0.4)" stroke="#0F2D4A" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
+      {/* Bottom-right hexagon — overlaps into center */}
+      <path d="M62 46.5 L73.5 53.1 L73.5 66.3 L62 72.9 L50.5 66.3 L50.5 53.1 Z" fill="rgba(15,45,74,0.4)" stroke="#0F2D4A" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
+      {/* Overlap glow — where the two bottom hexagons intersect */}
+      <circle cx="50" cy="59.7" r="7" fill="rgba(0,212,170,0.2)" />
+      {/* Top hexagon — stroke only, teal */}
       <path d="M50 17 L61.5 23.6 L61.5 36.8 L50 43.4 L38.5 36.8 L38.5 23.6 Z" fill="none" stroke="#00D4AA" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
-      {/* Bottom-left — azul oscuro */}
-      <path d="M30 46.5 L41.5 53.1 L41.5 66.3 L30 72.9 L18.5 66.3 L18.5 53.1 Z" fill="none" stroke="#0F2D4A" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
-      {/* Bottom-right — azul oscuro */}
-      <path d="M70 46.5 L81.5 53.1 L81.5 66.3 L70 72.9 L58.5 66.3 L58.5 53.1 Z" fill="none" stroke="#0F2D4A" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
-      {/* Connectors */}
-      <g opacity="0.6">
-        <line x1="50" y1="44" x2="44" y2="51.5" stroke="#2A4A6B" strokeWidth="0.6" />
-        <line x1="50" y1="44" x2="56" y2="51.5" stroke="#2A4A6B" strokeWidth="0.6" />
-        <line x1="45.2" y1="53.2" x2="54.8" y2="53.2" stroke="#2A4A6B" strokeWidth="0.6" />
-      </g>
-      {/* Three points */}
+      {/* Three dots */}
+      <circle cx="39" cy="57.2" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
+      <circle cx="61" cy="57.2" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
       <circle cx="50" cy="41.2" r="4.0" fill="#7EEAD4" stroke="white" strokeWidth="0.35" />
-      <circle cx="42.8" cy="54.2" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
-      <circle cx="57.2" cy="54.2" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
     </svg>
   )
 }

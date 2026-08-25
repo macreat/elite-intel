@@ -48,9 +48,6 @@
         stroke-linejoin: round;
       }
 
-      /* Each fragment gets its own scatter direction and timing offset so the
-         logo reads as deconstructing into pieces and reassembling, rather
-         than a uniform fade. */
       #piece-a {
         animation: assemble-a 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
       }
@@ -69,19 +66,25 @@
       #dot-3 {
         animation: assemble-dot-3 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
       }
+      #overlap-glow {
+        animation: assemble-glow 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+      }
 
+      /* Top hexagon — scatters diagonally top-left */
       @keyframes assemble-a {
         0% { opacity: 0; transform: translate(-36px, -30px) rotate(-22deg) scale(0.6); }
         45% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
         55% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
         100% { opacity: 0; transform: translate(36px, 30px) rotate(22deg) scale(0.6); }
       }
+      /* Bottom-left hexagon — scatters bottom-left, converges to overlapping center */
       @keyframes assemble-b {
         0% { opacity: 0; transform: translate(-38px, 32px) rotate(-18deg) scale(0.6); }
         45% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
         55% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
         100% { opacity: 0; transform: translate(38px, -32px) rotate(18deg) scale(0.6); }
       }
+      /* Bottom-right hexagon — scatters bottom-right, converges to overlapping center */
       @keyframes assemble-c {
         0% { opacity: 0; transform: translate(38px, 32px) rotate(18deg) scale(0.6); }
         45% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
@@ -106,11 +109,42 @@
         55% { opacity: 1; transform: translate(0, 0) scale(1); }
         100% { opacity: 0; transform: translate(-26px, -18px) scale(0.3); }
       }
+      @keyframes assemble-glow {
+        0% { opacity: 0; transform: scale(0.3); }
+        45% { opacity: 1; transform: scale(1); }
+        55% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.3); }
+      }
     </style>
   </head>
   <body>
     <div id="stage">
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Bottom-left hexagon — overlaps into center -->
+        <path
+          id="piece-b"
+          class="fragment"
+          d="M38 46.5 L49.5 53.1 L49.5 66.3 L38 72.9 L26.5 66.3 L26.5 53.1 Z"
+          fill="rgba(15,45,74,0.4)"
+          stroke="#0F2D4A"
+          stroke-width="2.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <!-- Bottom-right hexagon — overlaps into center -->
+        <path
+          id="piece-c"
+          class="fragment"
+          d="M62 46.5 L73.5 53.1 L73.5 66.3 L62 72.9 L50.5 66.3 L50.5 53.1 Z"
+          fill="rgba(15,45,74,0.4)"
+          stroke="#0F2D4A"
+          stroke-width="2.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <!-- Overlap glow — visible where the two bottom hexagons intersect -->
+        <circle id="overlap-glow" class="fragment" cx="50" cy="59.7" r="7" fill="rgba(0,212,170,0.2)" />
+        <!-- Top hexagon — stroke only, teal -->
         <path
           id="piece-a"
           class="fragment stroke-fragment"
@@ -118,23 +152,10 @@
           stroke="#00D4AA"
           stroke-width="2.6"
         />
-        <path
-          id="piece-b"
-          class="fragment stroke-fragment"
-          d="M30 46.5 L41.5 53.1 L41.5 66.3 L30 72.9 L18.5 66.3 L18.5 53.1 Z"
-          stroke="#0F2D4A"
-          stroke-width="2.6"
-        />
-        <path
-          id="piece-c"
-          class="fragment stroke-fragment"
-          d="M70 46.5 L81.5 53.1 L81.5 66.3 L70 72.9 L58.5 66.3 L58.5 53.1 Z"
-          stroke="#0F2D4A"
-          stroke-width="2.6"
-        />
+        <!-- Dots -->
+        <circle id="dot-2" class="fragment" cx="39" cy="57.2" r="3.7" fill="#14365E" />
+        <circle id="dot-3" class="fragment" cx="61" cy="57.2" r="3.7" fill="#14365E" />
         <circle id="dot-1" class="fragment" cx="50" cy="41.2" r="4.0" fill="#7EEAD4" />
-        <circle id="dot-2" class="fragment" cx="42.8" cy="54.2" r="3.7" fill="#14365E" />
-        <circle id="dot-3" class="fragment" cx="57.2" cy="54.2" r="3.7" fill="#14365E" />
       </svg>
     </div>
     <script src="splash.js"></script>

@@ -6,6 +6,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const baseAnimation = {
     'piece-a': 'assemble-a',
     'piece-b': 'assemble-b',
+    'piece-c': 'assemble-c',
   }
 
   paths.forEach((path, index) => {
