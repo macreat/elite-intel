@@ -7,6 +7,7 @@ interface InventoryModalProps {
   open: boolean
   onClose: () => void
   onApplied: () => void
+  initialTab?: Tab
 }
 
 type Tab = 'add' | 'prices'
@@ -20,45 +21,56 @@ function parseOptionalNumber(raw: string | undefined): number | null {
   return Number(text)
 }
 
-export function InventoryModal({ open, onClose, onApplied }: InventoryModalProps) {
-  const [tab, setTab] = useState<Tab>('add')
+export function InventoryModal({ open, onClose, onApplied, initialTab }: InventoryModalProps) {
+  const [tab, setTab] = useState<Tab>(initialTab ?? 'add')
 
   useEffect(() => {
-    if (open) setTab('add')
-  }, [open])
+    if (open) setTab(initialTab ?? 'add')
+  }, [open, initialTab])
 
   if (!open) return null
 
+  const singleMode = initialTab !== undefined
+  const title = initialTab === 'prices' ? 'Update prices' : initialTab === 'add' ? 'Add product' : 'Update inventory'
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="flex max-h-[70vh] w-[clamp(320px,42vw,36rem)] flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-3 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div
+        className="flex max-h-[36vh] w-[clamp(280px,26vw,20rem)] flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-2 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-white">Update inventory</h3>
+          <h3 className="text-xs font-semibold text-white">{title}</h3>
+          <button type="button" onClick={onClose} className="rounded p-1 text-slate-400 hover:text-white" aria-label="Close">
+            ✕
+          </button>
         </div>
 
-        <div className="mt-2 flex gap-1 rounded-lg border border-white/[0.06] bg-navy-800/60 p-1">
-          <button
-            type="button"
-            className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-              tab === 'add' ? 'bg-navy-600 text-white' : 'text-slate-400 hover:text-slate-200'
-            }`}
-            onClick={() => setTab('add')}
-          >
-            Add product
-          </button>
-          <button
-            type="button"
-            className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
-              tab === 'prices' ? 'bg-navy-600 text-white' : 'text-slate-400 hover:text-slate-200'
-            }`}
-            onClick={() => setTab('prices')}
-          >
-            Update prices
-          </button>
-        </div>
+        {!singleMode ? (
+          <div className="mt-2 flex gap-1 rounded-lg border border-white/[0.06] bg-navy-800/60 p-1">
+            <button
+              type="button"
+              className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                tab === 'add' ? 'bg-navy-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+              onClick={() => setTab('add')}
+            >
+              Add product
+            </button>
+            <button
+              type="button"
+              className={`flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                tab === 'prices' ? 'bg-navy-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              }`}
+              onClick={() => setTab('prices')}
+            >
+              Update prices
+            </button>
+          </div>
+        ) : null}
 
         <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
-          {tab === 'add' ? (
+          {(singleMode ? initialTab : tab) === 'add' ? (
             <AddProductForm onCreated={onApplied} onClose={onClose} />
           ) : (
             <UpdatePricesPanel onApplied={onApplied} onClose={onClose} />

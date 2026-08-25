@@ -19,7 +19,8 @@ export function CatalogPage() {
     return stored === null ? false : stored === 'true'
   })
   const [stockModalOpen, setStockModalOpen] = useState(false)
-  const [inventoryModalOpen, setInventoryModalOpen] = useState(false)
+  const [addProductOpen, setAddProductOpen] = useState(false)
+  const [updatePricesOpen, setUpdatePricesOpen] = useState(false)
   const page_size = 20
 
   const togglePrices = () => {
@@ -62,10 +63,17 @@ export function CatalogPage() {
           </button>
           <button
             type="button"
-            onClick={() => setInventoryModalOpen(true)}
+            onClick={() => setAddProductOpen(true)}
             className="btn-secondary text-sm"
           >
-            Update inventory
+            Add product
+          </button>
+          <button
+            type="button"
+            onClick={() => setUpdatePricesOpen(true)}
+            className="btn-secondary text-sm"
+          >
+            Update prices
           </button>
           <button
             type="button"
@@ -167,9 +175,17 @@ export function CatalogPage() {
       />
 
       <InventoryModal
-        open={inventoryModalOpen}
-        onClose={() => setInventoryModalOpen(false)}
+        open={addProductOpen}
+        onClose={() => setAddProductOpen(false)}
         onApplied={() => setReloadKey((k) => k + 1)}
+        initialTab="add"
+      />
+
+      <InventoryModal
+        open={updatePricesOpen}
+        onClose={() => setUpdatePricesOpen(false)}
+        onApplied={() => setReloadKey((k) => k + 1)}
+        initialTab="prices"
       />
     </div>
   )

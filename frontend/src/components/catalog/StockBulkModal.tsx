@@ -83,9 +83,17 @@ export function StockBulkModal({ open, onClose, onApplied }: StockBulkModalProps
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="flex max-h-[40vh] w-[clamp(300px,30vw,26rem)] flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-3 shadow-xl">
-        <h3 className="text-sm font-semibold text-white">Change stock</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div
+        className="flex max-h-[36vh] w-[clamp(280px,26vw,20rem)] flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-2 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold text-white">Change stock</h3>
+          <button type="button" onClick={onClose} className="rounded p-1 text-slate-400 hover:text-white" aria-label="Close">
+            ✕
+          </button>
+        </div>
 
         {loading ? <LoadingState message="Loading catalog..." /> : null}
         {!loading && loadError ? (
