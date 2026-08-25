@@ -11,61 +11,22 @@ const navItems = [
 function EliteLogo() {
   return (
     <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="tb-celeste" x1="50" y1="20" x2="50" y2="42" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#5EEAD4" />
-          <stop offset="100%" stopColor="#00C2A8" />
-        </linearGradient>
-        <linearGradient id="tb-dark" x1="36" y1="43" x2="36" y2="65" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#2A5A8A" />
-          <stop offset="100%" stopColor="#0F2D4A" />
-        </linearGradient>
-        <radialGradient id="tb-dotCeleste" cx="50%" cy="35%" r="65%">
-          <stop offset="0%" stopColor="#A7F3E8" />
-          <stop offset="100%" stopColor="#00D4AA" />
-        </radialGradient>
-        <radialGradient id="tb-dotDark" cx="50%" cy="35%" r="65%">
-          <stop offset="0%" stopColor="#3A6EA5" />
-          <stop offset="100%" stopColor="#0F2D4A" />
-        </radialGradient>
-      </defs>
-      {/* Top hexagon — verde celeste */}
-      <path
-        d="M50 20.5 L59.2 25.9 L59.2 36.6 L50 42 L40.8 36.6 L40.8 25.9 Z"
-        fill="none"
-        stroke="url(#tb-celeste)"
-        strokeWidth="2.4"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
+      {/* Top — verde celeste */}
+      <path d="M50 17 L61.5 23.6 L61.5 36.8 L50 43.4 L38.5 36.8 L38.5 23.6 Z" fill="none" stroke="#00D4AA" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
       {/* Bottom-left — azul oscuro */}
-      <path
-        d="M36 43.2 L45.2 48.6 L45.2 59.3 L36 64.7 L26.8 59.3 L26.8 48.6 Z"
-        fill="none"
-        stroke="url(#tb-dark)"
-        strokeWidth="2.4"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
+      <path d="M30 46.5 L41.5 53.1 L41.5 66.3 L30 72.9 L18.5 66.3 L18.5 53.1 Z" fill="none" stroke="#0F2D4A" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
       {/* Bottom-right — azul oscuro */}
-      <path
-        d="M64 43.2 L73.2 48.6 L73.2 59.3 L64 64.7 L54.8 59.3 L54.8 48.6 Z"
-        fill="none"
-        stroke="url(#tb-dark)"
-        strokeWidth="2.4"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-      {/* Central connectors */}
-      <g opacity="0.55">
-        <line x1="50" y1="44.2" x2="46.5" y2="49.8" stroke="#3A6A8A" strokeWidth="0.6" />
-        <line x1="50" y1="44.2" x2="53.5" y2="49.8" stroke="#3A6A8A" strokeWidth="0.6" />
-        <line x1="45.2" y1="51.5" x2="54.8" y2="51.5" stroke="#3A6A8A" strokeWidth="0.6" />
+      <path d="M70 46.5 L81.5 53.1 L81.5 66.3 L70 72.9 L58.5 66.3 L58.5 53.1 Z" fill="none" stroke="#0F2D4A" strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
+      {/* Connectors */}
+      <g opacity="0.6">
+        <line x1="50" y1="44" x2="44" y2="51.5" stroke="#2A4A6B" strokeWidth="0.6" />
+        <line x1="50" y1="44" x2="56" y2="51.5" stroke="#2A4A6B" strokeWidth="0.6" />
+        <line x1="45.2" y1="53.2" x2="54.8" y2="53.2" stroke="#2A4A6B" strokeWidth="0.6" />
       </g>
-      {/* Three points — 1 verde celeste (top), 2 azul oscuro */}
-      <circle cx="50" cy="41.5" r="4.2" fill="url(#tb-dotCeleste)" stroke="rgba(255,255,255,0.85)" strokeWidth="0.4" />
-      <circle cx="43.8" cy="52.2" r="3.9" fill="url(#tb-dotDark)" stroke="rgba(255,255,255,0.18)" strokeWidth="0.4" />
-      <circle cx="56.2" cy="52.2" r="3.9" fill="url(#tb-dotDark)" stroke="rgba(255,255,255,0.18)" strokeWidth="0.4" />
+      {/* Three points */}
+      <circle cx="50" cy="41.2" r="4.0" fill="#7EEAD4" stroke="white" strokeWidth="0.35" />
+      <circle cx="42.8" cy="54.2" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
+      <circle cx="57.2" cy="54.2" r="3.7" fill="#14365E" stroke="rgba(255,255,255,0.22)" strokeWidth="0.35" />
     </svg>
   )
 }
