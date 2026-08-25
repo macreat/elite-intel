@@ -14,7 +14,7 @@ import type { Transaction } from '../types/transaction'
 import { useAsyncData } from './hooks/useAsyncData'
 
 function granularityForPreset(preset: string): 'day' | 'week' | 'month' {
-  if (preset === 'year' || preset === 'all_time') return 'week'
+  if (preset === 'year' || preset === 'all_time') return 'month'
   return 'day'
 }
 
