@@ -84,11 +84,8 @@ export function StockBulkModal({ open, onClose, onApplied }: StockBulkModalProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="flex max-h-[55vh] w-full max-w-md flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-4 shadow-xl">
-        <h3 className="text-lg font-semibold text-white">Change stock</h3>
-        <p className="mt-1 text-sm text-slate-400">
-          Set the stock for each article. Empty means leave it unchanged. Applies to every edited article in a single save.
-        </p>
+      <div className="flex max-h-[40vh] w-full max-w-xs flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-3 shadow-xl">
+        <h3 className="text-sm font-semibold text-white">Change stock</h3>
 
         {loading ? <LoadingState message="Loading catalog..." /> : null}
         {!loading && loadError ? (
@@ -99,22 +96,22 @@ export function StockBulkModal({ open, onClose, onApplied }: StockBulkModalProps
           <>
             <input
               type="text"
-              className="field mt-4"
+              className="field mt-2 py-1 text-xs"
               placeholder="Filter articles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
 
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto rounded-lg border border-white/[0.06]">
+            <div className="mt-2 min-h-0 flex-1 overflow-y-auto rounded-lg border border-white/[0.06]">
               {filtered.length === 0 ? (
                 <EmptyState title="No products found" message="Try a different filter." />
               ) : (
                 <table className="min-w-full divide-y divide-white/[0.06]">
-                  <thead className="sticky top-0 bg-navy-800 text-left text-xs uppercase tracking-wide text-slate-400">
+                  <thead className="sticky top-0 bg-navy-800 text-left text-[10px] uppercase tracking-wide text-slate-400">
                     <tr>
-                      <th className="px-3 py-2">Articulo</th>
-                      <th className="px-3 py-2 w-24">Current</th>
-                      <th className="px-3 py-2 w-32">New stock</th>
+                      <th className="px-2 py-1">Articulo</th>
+                      <th className="px-2 py-1 w-14">Now</th>
+                      <th className="px-2 py-1 w-20">New</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/[0.04]">
@@ -122,16 +119,16 @@ export function StockBulkModal({ open, onClose, onApplied }: StockBulkModalProps
                       const value = inputs[product.id]
                       return (
                         <tr key={product.id}>
-                          <td className="px-3 py-2 text-sm text-slate-200">{product.name}</td>
-                          <td className="px-3 py-2 text-sm text-slate-400">
+                          <td className="px-2 py-1 text-xs text-slate-200">{product.name}</td>
+                          <td className="px-2 py-1 text-xs text-slate-400">
                             {product.stock_qty ?? '—'}
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-2 py-1">
                             <input
                               type="number"
                               min={0}
                               step={1}
-                              className="field py-1 text-sm"
+                              className="field px-1 py-0.5 text-xs"
                               aria-label={`New stock for ${product.name}`}
                               value={value ?? ''}
                               onChange={(e) =>
@@ -148,17 +145,19 @@ export function StockBulkModal({ open, onClose, onApplied }: StockBulkModalProps
             </div>
 
             {invalidInput ? (
-              <p className="mt-2 text-sm text-rose-400">Stock must be a whole number greater than or equal to 0.</p>
+              <p className="mt-1 text-[11px] text-rose-400">Stock must be a whole number ≥ 0.</p>
             ) : null}
-            {saveError ? <p className="mt-2 text-sm text-rose-400">{saveError}</p> : null}
+            {saveError ? (
+              <p className="mt-1 text-[11px] text-rose-400">{saveError}</p>
+            ) : null}
 
-            <div className="mt-5 flex justify-end gap-2">
-              <button type="button" className="btn-secondary" onClick={onClose} disabled={saving}>
+            <div className="mt-3 flex justify-end gap-2">
+              <button type="button" className="btn-secondary px-3 py-1 text-xs" onClick={onClose} disabled={saving}>
                 Cancel
               </button>
               <button
                 type="button"
-                className="btn-primary"
+                className="btn-primary px-3 py-1 text-xs"
                 onClick={handleApply}
                 disabled={saving || invalidInput || changedEntries.length === 0}
               >
