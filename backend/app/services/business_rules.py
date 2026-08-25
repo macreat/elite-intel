@@ -15,6 +15,10 @@ ACCESORIOS_CATEGORY = "Accesorios"
 BEMOVIL_REMOTE_CATEGORY = "BeMovilRemote"
 BEMOVILE_INCOME_CATEGORY = "BeMovileIncome"
 
+# Categories tracked as INCOME that represent money set aside as savings (e.g. monthly
+# savings deposits built up across the month). Estimated Savings sums these directly.
+ESTIMATED_SAVINGS_CATEGORIES = frozenset({"Ahorro mensual"})
+
 # Categories tracked as INCOME but excluded from dashboard income / net KPIs and CSV running balance.
 KPI_EXCLUDED_INCOME_CATEGORIES = frozenset({BEMOVIL_REMOTE_CATEGORY})
 

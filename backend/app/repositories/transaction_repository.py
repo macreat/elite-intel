@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.models.category import Category
 from app.models.enums import TransactionType
 from app.models.transaction import Transaction
-from app.services.business_rules import KPI_EXCLUDED_INCOME_CATEGORIES
+from app.services.business_rules import ESTIMATED_SAVINGS_CATEGORIES, KPI_EXCLUDED_INCOME_CATEGORIES
 from app.services.calendar import as_utc
 
 TimeseriesGranularity = Literal["day", "week", "month"]
@@ -94,21 +94,32 @@ class TransactionRepository:
             else_=0,
         )
         expense_case = case((Transaction.transaction_type == TransactionType.EXPENSE, Transaction.amount), else_=0)
+        savings_case = case(
+            (
+                and_(
+                    Transaction.transaction_type == TransactionType.INCOME,
+                    Category.name.in_(ESTIMATED_SAVINGS_CATEGORIES),
+                ),
+                Transaction.amount,
+            ),
+            else_=0,
+        )
         stmt = (
             select(
                 cast(func.coalesce(func.sum(income_case), 0), Numeric(14, 2)),
                 cast(func.coalesce(func.sum(expense_case), 0), Numeric(14, 2)),
+                cast(func.coalesce(func.sum(savings_case), 0), Numeric(14, 2)),
                 func.count(Transaction.id),
             )
             .select_from(Transaction)
             .join(Category, Category.id == Transaction.category_id)
             .where(Transaction.occurred_at >= as_utc(start_date), Transaction.occurred_at <= as_utc(end_date))
         )
-        income, expenses, count = self.db.execute(stmt).one()
+        income, expenses, savings_amount, count = self.db.execute(stmt).one()
         income = Decimal(income)
         expenses = Decimal(expenses)
+        savings = Decimal(savings_amount)
         net = income - expenses
-        savings = max(net, Decimal("0"))
         savings_rate = float(savings / income) if income > 0 else 0.0
         return {
             "total_income": income,

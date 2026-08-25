@@ -37,8 +37,9 @@ def test_dashboard_math_and_savings_floor(client):
     assert data["total_income"] == "1300.00"
     assert data["total_expenses"] == "200.00"
     assert data["net_balance"] == "1100.00"
-    assert data["estimated_savings"] == "1100.00"
-    assert round(data["savings_rate"], 6) == round(1100 / 1300, 6)
+    # No savings-category transactions present -> estimated savings stays zero.
+    assert data["estimated_savings"] == "0.00" or data["estimated_savings"] == 0
+    assert data["savings_rate"] == 0
     assert data["transaction_count"] == 3
 
     cat_breakdown = client.get("/api/v1/dashboard/categories?start_date=2026-08-01&end_date=2026-08-31")
@@ -60,7 +61,7 @@ def test_dashboard_zero_income_savings_rate_zero(client):
     assert data["total_income"] == "0.00"
     assert data["total_expenses"] == "50.00"
     assert data["net_balance"] == "-50.00"
-    assert data["estimated_savings"] == "0"
+    assert data["estimated_savings"] == "0.00"
     assert data["savings_rate"] == 0
 
 
@@ -160,3 +161,24 @@ def test_dashboard_timeseries_honors_requested_granularity_and_timezone(
 
     assert response.status_code == 200
     assert response.json() == [{"date": expected_date, "income": "75.00", "expenses": "0.00"}]
+
+
+def test_estimated_savings_sums_savings_categories(client):
+    """Estimated savings = sum of INCOME transactions in savings categories (e.g. Ahorro mensual)."""
+    ahorro = _cat(client, "Ahorro mensual", "INCOME")
+    other_income = _cat(client, "Impresiones", "INCOME")
+    expense = _cat(client, "Salidas", "EXPENSE")
+
+    # Savings built up across days: 400k + 200k + 50k pattern, scaled down.
+    _tx(client, ahorro["id"], "INCOME", "400.00", datetime(2026, 8, 1, tzinfo=timezone.utc).isoformat())
+    _tx(client, ahorro["id"], "INCOME", "200.00", datetime(2026, 8, 18, tzinfo=timezone.utc).isoformat())
+    _tx(client, ahorro["id"], "INCOME", "50.00", datetime(2026, 8, 19, tzinfo=timezone.utc).isoformat())
+    _tx(client, other_income["id"], "INCOME", "1371.90", datetime(2026, 8, 5, tzinfo=timezone.utc).isoformat())
+    _tx(client, expense["id"], "EXPENSE", "3425.00", datetime(2026, 8, 6, tzinfo=timezone.utc).isoformat())
+
+    summary = client.get("/api/v1/dashboard/summary?start_date=2026-08-01&end_date=2026-08-31")
+    assert summary.status_code == 200
+    data = summary.json()
+    assert data["estimated_savings"] == "650.00"
+    assert round(data["savings_rate"], 6) == round(650 / 2021.9, 6)
+    assert data["total_income"] == "2021.90"
