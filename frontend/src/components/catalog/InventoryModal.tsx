@@ -27,6 +27,8 @@ export function InventoryModal({ open, onClose, onApplied }: InventoryModalProps
     if (open) setTab('add')
   }, [open])
 
+  if (!open) return null
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="flex max-h-[70vh] w-[clamp(320px,42vw,36rem)] flex-col rounded-xl border border-white/[0.06] bg-navy-700 p-3 shadow-xl">
@@ -59,7 +61,7 @@ export function InventoryModal({ open, onClose, onApplied }: InventoryModalProps
           {tab === 'add' ? (
             <AddProductForm onCreated={onApplied} onClose={onClose} />
           ) : (
-            <UpdatePricesPanel onApplied={onApplied} />
+            <UpdatePricesPanel onApplied={onApplied} onClose={onClose} />
           )}
         </div>
       </div>
@@ -82,12 +84,12 @@ function AddProductForm({ onCreated, onClose }: AddProductFormProps) {
 
   const invalid =
     !name.trim() ||
-    [invoicePrice, localPrice, stockQty].some((raw) => {
+    [invoicePrice, localPrice].some((raw) => {
       const text = raw.trim()
       if (text === '') return false
       return !NUMERIC_PATTERN.test(text)
     }) ||
-    !WHOLE_PATTERN.test(stockQty.trim())
+    (stockQty.trim() !== '' && !WHOLE_PATTERN.test(stockQty.trim()))
 
   const handleCreate = async () => {
     if (invalid || saving) return
@@ -184,7 +186,7 @@ function AddProductForm({ onCreated, onClose }: AddProductFormProps) {
   )
 }
 
-function UpdatePricesPanel({ onApplied }: { onApplied: () => void }) {
+function UpdatePricesPanel({ onApplied, onClose }: { onApplied: () => void; onClose: () => void }) {
   const [products, setProducts] = useState<CatalogItem[]>([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -338,8 +340,8 @@ function UpdatePricesPanel({ onApplied }: { onApplied: () => void }) {
       {saveError ? <p className="mt-1 text-[11px] text-rose-400">{saveError}</p> : null}
 
       <div className="mt-3 flex justify-end gap-2">
-        <button type="button" className="btn-secondary px-3 py-1 text-xs" onClick={onApplied} disabled={saving}>
-          Close
+        <button type="button" className="btn-secondary px-3 py-1 text-xs" onClick={onClose} disabled={saving}>
+          Cancel
         </button>
         <button
           type="button"
