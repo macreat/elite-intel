@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Eye, EyeOff } from 'lucide-react'
 import { EmptyState, ErrorState, LoadingState } from '../components/common/States'
 import { StockBulkModal } from '../components/catalog/StockBulkModal'
+import { InventoryModal } from '../components/catalog/InventoryModal'
 import { apiClient } from '../services/apiClient'
 import { formatCurrency } from '../utils/format'
 import type { PaginatedResponse } from '../types/api'
@@ -18,6 +19,7 @@ export function CatalogPage() {
     return stored === null ? false : stored === 'true'
   })
   const [stockModalOpen, setStockModalOpen] = useState(false)
+  const [inventoryModalOpen, setInventoryModalOpen] = useState(false)
   const page_size = 20
 
   const togglePrices = () => {
@@ -57,6 +59,13 @@ export function CatalogPage() {
             className="btn-secondary text-sm"
           >
             Change stock
+          </button>
+          <button
+            type="button"
+            onClick={() => setInventoryModalOpen(true)}
+            className="btn-secondary text-sm"
+          >
+            Update inventory
           </button>
           <button
             type="button"
@@ -154,6 +163,12 @@ export function CatalogPage() {
       <StockBulkModal
         open={stockModalOpen}
         onClose={() => setStockModalOpen(false)}
+        onApplied={() => setReloadKey((k) => k + 1)}
+      />
+
+      <InventoryModal
+        open={inventoryModalOpen}
+        onClose={() => setInventoryModalOpen(false)}
         onApplied={() => setReloadKey((k) => k + 1)}
       />
     </div>

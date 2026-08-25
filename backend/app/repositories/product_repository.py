@@ -33,6 +33,22 @@ class ProductRepository:
         self.db.refresh(product)
         return product
 
+    def first_category_id(self) -> int | None:
+        from app.models.category import Category
+
+        return self.db.scalar(select(Category.id).order_by(Category.id).limit(1))
+
+    def get_or_create_default_category(self) -> int:
+        from app.models.category import Category
+
+        existing = self.first_category_id()
+        if existing is not None:
+            return existing
+        category = Category(name="General", type="EXPENSE")
+        self.db.add(category)
+        self.db.flush()
+        return category.id
+
     def list_catalog(
         self, *, search: str | None = None, page: int = 1, page_size: int = 20
     ) -> tuple[list[Product], int]:

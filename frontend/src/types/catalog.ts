@@ -24,3 +24,24 @@ export interface StockBulkPayload {
 export interface StockBulkResponse {
   items: CatalogItem[]
 }
+
+export interface ProductCreatePayload {
+  name: string
+  invoice_price?: number
+  local_price?: number
+  stock_qty?: number
+}
+
+export interface PriceBulkEntry {
+  product_id: number
+  invoice_price?: number
+  local_price?: number
+}
+
+export interface PriceBulkPayload {
+  items: PriceBulkEntry[]
+}
+
+export interface PriceBulkResponse {
+  items: CatalogItem[]
+}

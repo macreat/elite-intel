@@ -9,6 +9,11 @@ import type {
 } from '../types/import'
 import type { PaginatedResponse } from '../types/api'
 import type { CatalogItem } from '../types/catalog'
+import type {
+  PriceBulkPayload,
+  PriceBulkResponse,
+  ProductCreatePayload,
+} from '../types/catalog'
 import type { StockBulkPayload, StockBulkResponse } from '../types/catalog'
 import type { Transaction, TransactionFilters, TransactionPayload } from '../types/transaction'
 
@@ -127,6 +132,16 @@ export const apiClient = {
 
   bulkUpdateStock: async (payload: StockBulkPayload) => {
     const { data } = await api.post<StockBulkResponse>('/products/stock/bulk', payload)
+    return data
+  },
+
+  createProduct: async (payload: ProductCreatePayload) => {
+    const { data } = await api.post<CatalogItem>('/products', payload)
+    return data
+  },
+
+  bulkUpdatePrices: async (payload: PriceBulkPayload) => {
+    const { data } = await api.post<PriceBulkResponse>('/products/prices/bulk', payload)
     return data
   },
 
