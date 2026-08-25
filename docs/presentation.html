@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Elite Intel · Presentación institucional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0B1120;
+    --panel:#101A30;
+    --line:rgba(232,237,246,.08);
+    --mint:#00D49B;
+    --rose:#F43F5E;
+    --paper:#E8EDF6;
+    --muted:#8394AE;
+    --serif:'Fraunces',serif;
+    --sans:'Inter',sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--sans);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- deck mechanics ---------- */
+  .deck{position:relative;height:100vh;width:100vw}
+  .slide{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:min(9vh,90px) min(10vw,130px);
+    opacity:0;visibility:hidden;transform:translateX(40px);
+    transition:opacity .55s ease,transform .55s ease,visibility .55s;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    .slide{transition:opacity .01s;transform:none}
+  }
+
+  /* ---------- shared furniture ---------- */
+  .ledger{
+    position:absolute;left:0;right:0;height:1px;
+    background:repeating-linear-gradient(90deg,var(--line) 0 120px,transparent 120px 132px);
+  }
+  .eyebrow{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.32em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:26px;
+  }
+  .eyebrow b{color:var(--mint);font-weight:400}
+  .counter{
+    position:fixed;top:34px;right:44px;z-index:10;
+    font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.2em;
+  }
+  .brandmark{
+    position:fixed;top:28px;left:44px;z-index:10;display:flex;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.3em;color:var(--muted);
+  }
+  .brandmark i{width:9px;height:9px;background:var(--mint);border-radius:2px;display:inline-block}
+
+  /* ---------- nav ---------- */
+  .dots{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);display:flex;gap:11px;z-index:10}
+  .dots button{
+    width:7px;height:7px;border-radius:50%;border:0;cursor:pointer;padding:0;
+    background:rgba(232,237,246,.18);transition:background .25s,transform .25s;
+  }
+  .dots button.on{background:var(--mint);transform:scale(1.35)}
+  .arrows{position:fixed;bottom:28px;right:44px;display:flex;gap:10px;z-index:10}
+  .arrows button{
+    width:42px;height:42px;border-radius:50%;cursor:pointer;
+    border:1px solid var(--line);background:transparent;color:var(--paper);
+    font-family:var(--mono);font-size:15px;transition:border-color .25s,color .25s;
+  }
+  .arrows button:hover{border-color:var(--mint);color:var(--mint)}
+  .hint{
+    position:fixed;bottom:38px;left:44px;font-family:var(--mono);
+    font-size:.66rem;color:rgba(131,148,174,.65);letter-spacing:.14em;z-index:10;
+  }
+  button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+
+  /* ---------- type scale ---------- */
+  h1{font-family:var(--serif);font-weight:300;font-size:clamp(3.4rem,8.5vw,7.2rem);line-height:1.02;letter-spacing:-.01em}
+  h2{font-family:var(--serif);font-weight:300;font-size:clamp(2.2rem,4.6vw,3.9rem);line-height:1.12;margin-bottom:34px}
+  h2 em,h1 em{font-style:normal;color:var(--mint)}
+  .lead{font-weight:300;font-size:clamp(1rem,1.45vw,1.22rem);line-height:1.75;color:var(--muted);max-width:56ch}
+  .lead strong{color:var(--paper);font-weight:500}
+
+  /* ---------- cover ---------- */
+  .cover-word{margin:18px 0 30px}
+  .cover-sub{display:flex;gap:26px;align-items:center}
+  .cover-sub .rule{height:1px;width:74px;background:var(--mint)}
+  .meta-row{display:flex;gap:56px;margin-top:64px;font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
+  .meta-row span b{display:block;color:var(--paper);font-weight:400;margin-bottom:7px;letter-spacing:.28em}
+
+  /* ---------- problem / two-column ---------- */
+  .cols{display:grid;grid-template-columns:1.05fr 1fr;gap:min(7vw,96px);align-items:start}
+  .ledger-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:26px 28px;font-family:var(--mono);font-size:.78rem;line-height:2.15;color:var(--muted);
+  }
+  .ledger-card .row{display:flex;justify-content:space-between;gap:20px;border-bottom:1px dashed rgba(232,237,246,.07)}
+  .ledger-card .row:last-child{border-bottom:0}
+  .ledger-card .in{color:var(--mint)} .ledger-card .out{color:var(--rose)}
+  .painlist{list-style:none;display:flex;flex-direction:column;gap:16px;margin-top:8px}
+  .painlist li{display:flex;gap:14px;font-weight:300;font-size:1.02rem;line-height:1.6;color:var(--paper)}
+  .painlist li::before{content:"—";color:var(--rose);flex-shrink:0}
+
+  /* ---------- kpi mock ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:46px}
+  .kpi{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 22px;
+  }
+  .kpi .lbl{font-family:var(--mono);font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .kpi .val{font-family:var(--mono);font-size:clamp(1.15rem,1.85vw,1.7rem);margin-top:14px;font-weight:500}
+  .kpi .sub{font-size:.74rem;color:var(--muted);margin-top:9px}
+  .v-mint{color:var(--mint)} .v-rose{color:var(--rose)}
+
+  /* ---------- feature rows ---------- */
+  .feat{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+  .fcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px 26px}
+  .fcard h3{font-family:var(--serif);font-weight:500;font-size:1.18rem;margin:16px 0 12px}
+  .fcard p{font-weight:300;font-size:.88rem;line-height:1.7;color:var(--muted)}
+  .fcard .glyph{font-family:var(--mono);font-size:.7rem;color:var(--mint);letter-spacing:.22em;text-transform:uppercase}
+
+  /* ---------- steps ---------- */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:52px;border-top:1px solid var(--line)}
+  .step{padding:34px 30px 0 0;border-right:1px solid var(--line);margin-right:30px}
+  .step:last-child{border-right:0;margin-right:0}
+  .step .num{font-family:var(--mono);color:var(--mint);font-size:.75rem;letter-spacing:.3em}
+  .step h3{font-family:var(--serif);font-weight:500;font-size:1.35rem;margin:18px 0 12px}
+  .step p{font-weight:300;font-size:.9rem;line-height:1.75;color:var(--muted)}
+
+  /* ---------- closing ---------- */
+  .close-big{font-family:var(--serif);font-weight:300;font-size:clamp(2.6rem,5.6vw,4.8rem);line-height:1.15}
+  .contact{display:flex;gap:60px;margin-top:70px;font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
+  .contact b{display:block;color:var(--paper);font-weight:400;margin-bottom:8px;letter-spacing:.26em}
+
+  @media (max-width:900px){
+    .slide{padding:12vh 7vw;overflow-y:auto;justify-content:flex-start}
+    .cols,.feat,.steps,.kpis{grid-template-columns:1fr}
+    .step{border-right:0;margin:0 0 26px}
+    .hint,.counter{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="brandmark"><i></i>ELITE&nbsp;INTEL</div>
+<div class="counter">01 / 09</div>
+
+<div class="deck">
+
+  <!-- 1 · PORTADA -->
+  <section class="slide active">
+    <div class="ledger" style="top:22%"></div>
+    <p class="eyebrow">Presentación de producto <b>· 2026</b></p>
+    <h1 class="cover-word">Gestión operativa<br />y financiera <em>integrada.</em></h1>
+    <div class="cover-sub">
+      <span class="rule"></span>
+      <p class="lead">Elite Intel consolida ventas, gastos, inventario e indicadores de ahorro en una única plataforma de administración. Implementación local, operación autónoma y control total sobre la información.</p>
+    </div>
+    <div class="meta-row">
+      <span><b>Producto</b>Elite Intel Desktop</span>
+      <span><b>Dirigido a</b>Administración del negocio</span>
+      <span><b>Arquitectura</b>On-premise · Un solo equipo</span>
+    </div>
+  </section>
+
+  <!-- 2 · PROBLEMA -->
+  <section class="slide">
+    <p class="eyebrow">Diagnóstico inicial</p>
+    <div class="cols">
+      <div>
+        <h2>El registro manual<br />introduce <em>riesgo operativo.</em></h2>
+        <ul class="painlist">
+          <li>Registros de ventas y gastos dispersos en cuadernos y hojas de cálculo sin conciliar.</li>
+          <li>Inconsistencias de precios: un mismo artículo con múltiples valores vigentes.</li>
+          <li>Ausencia de indicadores financieros: ahorro acumulado y tasa de ahorro sin medición.</li>
+          <li>Dependencia total de procesos manuales y del criterio individual para cada cierre.</li>
+        </ul>
+      </div>
+      <div class="ledger-card">
+        <div class="row"><span>Registro en cuaderno</span><span class="out">sin respaldo</span></div>
+        <div class="row"><span>Kardex xlsx</span><span class="out">versión desactualizada</span></div>
+        <div class="row"><span>Precio de artículo</span><span class="out">valor ambiguo</span></div>
+        <div class="row"><span>Ahorro del período</span><span class="out">no cuantificado</span></div>
+        <div class="row"><span style="color:var(--paper)">Confiabilidad del dato</span><span class="out">baja</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · SOLUCIÓN -->
+  <section class="slide">
+    <p class="eyebrow">Propuesta de valor</p>
+    <h2>Una plataforma.<br />Toda la operación. <em>Datos confiables.</em></h2>
+    <p class="lead">Elite Intel procesa los registros del kardex y del libro diario operativo, los normaliza y los presenta como información estructurada: cada ingreso, cada egreso y cada artículo del catálogo con trazabilidad completa y valores actualizados.</p>
+    <div class="kpis">
+      <div class="kpi"><span class="lbl">Ingresos</span><div class="val v-mint">$ 2.021.900</div><div class="sub">período: agosto · mes en curso</div></div>
+      <div class="kpi"><span class="lbl">Egresos</span><div class="val v-rose">$ 3.425.000</div><div class="sub">clasificados por categoría</div></div>
+      <div class="kpi"><span class="lbl">Balance neto</span><div class="val">-$ 1.403.100</div><div class="sub">cálculo automatizado</div></div>
+      <div class="kpi"><span class="lbl">Ahorro estimado</span><div class="val v-mint">$ 650.000</div><div class="sub">tasa de ahorro: 32,15 %</div></div>
+    </div>
+  </section>
+
+  <!-- 4 · INVENTARIO -->
+  <section class="slide">
+    <p class="eyebrow">Módulo de inventario y catálogo</p>
+    <div class="cols">
+      <div>
+        <h2>Control de artículos,<br />precios y <em>existencias.</em></h2>
+        <p class="lead">Catálogo operativo con 148 artículos activos. Precios de factura y de venta local editables desde la interfaz, con actualización masiva ante nuevas listas de proveedor. Cada modificación se replica automáticamente en la hoja de precios en formato Excel, eliminando la doble digitación.</p>
+      </div>
+      <div class="feat" style="grid-template-columns:1fr;gap:14px;margin-top:0">
+        <div class="fcard"><span class="glyph">Change stock</span><h3>Actualización masiva de existencias</h3><p>Vista consolidada de todos los artículos con filtro por nombre; las modificaciones se aplican en una única transacción atómica.</p></div>
+        <div class="fcard"><span class="glyph">Update inventory</span><h3>Administración de precios</h3><p>Alta de artículos nuevos y actualización selectiva de precios unitarios desde la misma consola, sin intervención de hojas de cálculo.</p></div>
+        <div class="fcard"><span class="glyph">Excel sync</span><h3>Sincronización bidireccional documentada</h3><p>Todo cambio de precio o existencia queda registrado en el archivo fuente del proveedor, conservando su estructura original.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · APLICACIÓN DE ESCRITORIO -->
+  <section class="slide">
+    <p class="eyebrow">Arquitectura de implementación</p>
+    <div class="cols">
+      <div>
+        <h2>Despliegue local,<br />operación <em>autónoma.</em></h2>
+        <p class="lead">Elite Intel se distribuye como aplicación nativa de escritorio para Windows. No requiere conectividad, infraestructura externa ni suscripciones recurrentes. La base de datos reside íntegramente en el equipo del cliente: la información es propiedad exclusiva del negocio.</p>
+      </div>
+      <div class="ledger-card">
+        <div class="row"><span>Instalación</span><span class="in">Un ejecutable · asistida</span></div>
+        <div class="row"><span>Conectividad requerida</span><span class="in">Ninguna</span></div>
+        <div class="row"><span>Costos recurrentes</span><span class="in">$ 0</span></div>
+        <div class="row"><span>Ubicación de los datos</span><span class="in">Equipo local · sector protegido</span></div>
+        <div class="row"><span>Actualización de versión</span><span>integridad de datos preservada</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · INTEGRIDAD -->
+  <section class="slide">
+    <p class="eyebrow">Integridad y continuidad</p>
+    <h2>Diseñado para garantizar<br />la consistencia <em>del dato.</em></h2>
+    <div class="feat">
+      <div class="fcard">
+        <span class="glyph">Resiliencia</span>
+        <h3>Almacenamiento protegido</h3>
+        <p>La base de datos reside en un directorio del sistema operativo excluido de los procesos de actualización y reinstalación. El versionado de la aplicación nunca compromete la información registrada.</p>
+      </div>
+      <div class="fcard">
+        <span class="glyph">Reglas de negocio</span>
+        <h3>Clasificación parametrizada</h3>
+        <p>Cada categoría aplica sus reglas contables definidas: líneas de negocio medidas por separado, márgenes calculados según política comercial y el ahorro registrado conforme a su naturaleza.</p>
+      </div>
+      <div class="fcard">
+        <span class="glyph">Trazabilidad</span>
+        <h3>Registro diario auditable</h3>
+        <p>Cada transacción se persiste fechada, categorizada y validada contra duplicados mediante huella digital única. La conciliación es automática y verificable.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · FLUJO OPERATIVO -->
+  <section class="slide">
+    <p class="eyebrow">Flujo operativo</p>
+    <h2>Proceso estandarizado<br />de <em>tres etapas.</em></h2>
+    <div class="steps">
+      <div class="step">
+        <span class="num">ETAPA 01</span>
+        <h3>Registro</h3>
+        <p>Los movimientos se incorporan desde el kardex o mediante formulario directo, con fecha y categoría asignadas. El sistema valida duplicados y consistencia temporal de forma automática.</p>
+      </div>
+      <div class="step">
+        <span class="num">ETAPA 02</span>
+        <h3>Actualización de inventario</h3>
+        <p>Frente a ingresos de mercancía o cambios de lista de precios, dos módulos cubren la operación completa: existencias masivas y administración de precios.</p>
+      </div>
+      <div class="step">
+        <span class="num">ETAPA 03</span>
+        <h3>Análisis y decisión</h3>
+        <p>El panel entrega indicadores en tiempo real: flujo de ingresos y egresos, ahorro acumulado con su tasa, y tendencias por día, semana, mes o ejercicio completo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · RESULTADOS -->
+  <section class="slide">
+    <p class="eyebrow">Resultados en producción</p>
+    <h2>Sistema en operación.<br /><em>Métricas verificables.</em></h2>
+    <div class="kpis" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi"><span class="lbl">Transacciones registradas</span><div class="val">481</div><div class="sub">primer mes de operación</div></div>
+      <div class="kpi"><span class="lbl">Artículos en catálogo</span><div class="val">148</div><div class="sub">con precios y existencias activos</div></div>
+      <div class="kpi"><span class="lbl">Categorías configuradas</span><div class="val">17</div><div class="sub">ingresos y egresos diferenciados</div></div>
+      <div class="kpi"><span class="lbl">Días continuos de operación</span><div class="val">19</div><div class="sub">sin pérdida de registros</div></div>
+    </div>
+    <p class="lead" style="margin-top:44px">Cifras reales extraídas del sistema en producción al cierre del presente informe. Disponibles para verificación directa frente a la aplicación.</p>
+  </section>
+
+  <!-- 9 · CIERRE -->
+  <section class="slide">
+    <div class="ledger" style="top:18%"></div>
+    <p class="eyebrow">Plan de implementación</p>
+    <p class="close-big">La operación ya genera<br />los datos. <em>Elite Intel</em><br />los convierte en decisiones.</p>
+    <div class="contact">
+      <span><b>Implementación</b>Ejecutable único · sesión asistida</span>
+      <span><b>Capacitación</b>Una sesión operativa</span>
+      <span><b>Soporte</b>Línea directa de desarrollo</span>
+    </div>
+  </section>
+
+</div>
+
+<div class="hint">← → PARA NAVEGAR</div>
+<div class="dots"></div>
+<div class="arrows">
+  <button id="prev" aria-label="Anterior">←</button>
+  <button id="next" aria-label="Siguiente">→</button>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dotsBox=document.querySelector('.dots');
+  const counter=document.querySelector('.counter');
+  let i=0;
+  slides.forEach((_,idx)=>{
+    const b=document.createElement('button');
+    b.setAttribute('aria-label','Ir a diapositiva '+(idx+1));
+    b.addEventListener('click',()=>go(idx));
+    dotsBox.appendChild(b);
+  });
+  const dots=[...dotsBox.children];
+  function go(n){
+    if(n<0||n>=slides.length)return;
+    slides[i].classList.remove('active');
+    i=n;
+    slides[i].classList.add('active');
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    counter.textContent=String(i+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');
+  }
+  document.getElementById('next').addEventListener('click',()=>go(i+1));
+  document.getElementById('prev').addEventListener('click',()=>go(i-1));
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')go(i+1);
+    if(e.key==='ArrowLeft'||e.key==='PageUp')go(i-1);
+    if(e.key==='Home')go(0);
+    if(e.key==='End')go(slides.length-1);
+  });
+  let tx=null;
+  document.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(tx===null)return;
+    const dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>60)go(i+(dx<0?1:-1));
+    tx=null;
+  },{passive:true});
+  go(0);
+</script>
+</body>
+</html>
