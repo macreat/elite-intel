@@ -6,152 +6,1021 @@
 <title>Elite Intel · Presentación institucional</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <style>
-  :root{
-    --ink:#0B1120;
-    --panel:#101A30;
-    --line:rgba(232,237,246,.08);
-    --mint:#00D49B;
-    --rose:#F43F5E;
-    --paper:#E8EDF6;
-    --muted:#8394AE;
-    --serif:'Fraunces',serif;
-    --sans:'Inter',sans-serif;
-    --mono:'IBM Plex Mono',monospace;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    background:var(--ink);
-    color:var(--paper);
-    font-family:var(--sans);
-    overflow:hidden;
-    -webkit-font-smoothing:antialiased;
+  :root {
+    --ink: #0B1120;
+    --panel: #101A30;
+    --line: rgba(232,237,246,.08);
+    --mint: #00D49B;
+    --rose: #F43F5E;
+    --paper: #E8EDF6;
+    --muted: #8394AE;
+    --serif: 'Fraunces', serif;
+    --sans: 'Inter', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+    --duration-fast: 0.35s;
+    --duration-mid: 0.7s;
+    --duration-slow: 1.4s;
   }
 
-  /* ---------- deck mechanics ---------- */
-  .deck{position:relative;height:100vh;width:100vw}
-  .slide{
-    position:absolute;inset:0;
-    display:flex;flex-direction:column;justify-content:center;
-    padding:min(9vh,90px) min(10vw,130px);
-    opacity:0;visibility:hidden;transform:translateX(40px);
-    transition:opacity .55s ease,transform .55s ease,visibility .55s;
-  }
-  .slide.active{opacity:1;visibility:visible;transform:none}
-  @media (prefers-reduced-motion:reduce){
-    .slide{transition:opacity .01s;transform:none}
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
 
-  /* ---------- shared furniture ---------- */
-  .ledger{
-    position:absolute;left:0;right:0;height:1px;
-    background:repeating-linear-gradient(90deg,var(--line) 0 120px,transparent 120px 132px);
+  html, body {
+    height: 100%;
+    width: 100%;
   }
-  .eyebrow{
-    font-family:var(--mono);font-size:.72rem;letter-spacing:.32em;
-    text-transform:uppercase;color:var(--muted);margin-bottom:26px;
+
+  body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--sans);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
   }
-  .eyebrow b{color:var(--mint);font-weight:400}
-  .counter{
-    position:fixed;top:34px;right:44px;z-index:10;
-    font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.2em;
+
+  /* ============================================
+     AMBIENT BACKGROUND & PARALLAX
+     ============================================ */
+
+  .deck {
+    position: relative;
+    height: 100vh;
+    width: 100vw;
+    perspective: 1200px;
   }
-  .brandmark{
-    position:fixed;top:28px;left:44px;z-index:10;display:flex;align-items:center;gap:10px;
-    font-family:var(--mono);font-size:.72rem;letter-spacing:.3em;color:var(--muted);
+
+  .deck::before,
+  .deck::after {
+    content: "";
+    position: fixed;
+    inset: auto;
+    width: 70vw;
+    height: 70vw;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(80px);
   }
-  .brandmark i{width:9px;height:9px;background:var(--mint);border-radius:2px;display:inline-block}
 
-  /* ---------- nav ---------- */
-  .dots{position:fixed;bottom:36px;left:50%;transform:translateX(-50%);display:flex;gap:11px;z-index:10}
-  .dots button{
-    width:7px;height:7px;border-radius:50%;border:0;cursor:pointer;padding:0;
-    background:rgba(232,237,246,.18);transition:background .25s,transform .25s;
+  .deck::before {
+    top: -25%;
+    left: -15%;
+    background: radial-gradient(
+      circle at 40% 40%,
+      rgba(0, 212, 155, 0.12),
+      rgba(0, 212, 155, 0.03),
+      transparent 70%
+    );
+    animation: floatMint 20s ease-in-out infinite;
   }
-  .dots button.on{background:var(--mint);transform:scale(1.35)}
-  .arrows{position:fixed;bottom:28px;right:44px;display:flex;gap:10px;z-index:10}
-  .arrows button{
-    width:42px;height:42px;border-radius:50%;cursor:pointer;
-    border:1px solid var(--line);background:transparent;color:var(--paper);
-    font-family:var(--mono);font-size:15px;transition:border-color .25s,color .25s;
+
+  .deck::after {
+    bottom: -20%;
+    right: -18%;
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(72, 96, 255, 0.1),
+      rgba(72, 96, 255, 0.02),
+      transparent 70%
+    );
+    animation: floatIndigo 22s ease-in-out infinite reverse;
   }
-  .arrows button:hover{border-color:var(--mint);color:var(--mint)}
-  .hint{
-    position:fixed;bottom:38px;left:44px;font-family:var(--mono);
-    font-size:.66rem;color:rgba(131,148,174,.65);letter-spacing:.14em;z-index:10;
+
+  @keyframes floatMint {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(3vw, 4vh) scale(1.06); }
   }
-  button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
 
-  /* ---------- type scale ---------- */
-  h1{font-family:var(--serif);font-weight:300;font-size:clamp(3.4rem,8.5vw,7.2rem);line-height:1.02;letter-spacing:-.01em}
-  h2{font-family:var(--serif);font-weight:300;font-size:clamp(2.2rem,4.6vw,3.9rem);line-height:1.12;margin-bottom:34px}
-  h2 em,h1 em{font-style:normal;color:var(--mint)}
-  .lead{font-weight:300;font-size:clamp(1rem,1.45vw,1.22rem);line-height:1.75;color:var(--muted);max-width:56ch}
-  .lead strong{color:var(--paper);font-weight:500}
-
-  /* ---------- cover ---------- */
-  .cover-word{margin:18px 0 30px}
-  .cover-sub{display:flex;gap:26px;align-items:center}
-  .cover-sub .rule{height:1px;width:74px;background:var(--mint)}
-  .meta-row{display:flex;gap:56px;margin-top:64px;font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.18em;text-transform:uppercase}
-  .meta-row span b{display:block;color:var(--paper);font-weight:400;margin-bottom:7px;letter-spacing:.28em}
-
-  /* ---------- problem / two-column ---------- */
-  .cols{display:grid;grid-template-columns:1.05fr 1fr;gap:min(7vw,96px);align-items:start}
-  .ledger-card{
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:26px 28px;font-family:var(--mono);font-size:.78rem;line-height:2.15;color:var(--muted);
+  @keyframes floatIndigo {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-4vw, -3vh) scale(1.07); }
   }
-  .ledger-card .row{display:flex;justify-content:space-between;gap:20px;border-bottom:1px dashed rgba(232,237,246,.07)}
-  .ledger-card .row:last-child{border-bottom:0}
-  .ledger-card .in{color:var(--mint)} .ledger-card .out{color:var(--rose)}
-  .painlist{list-style:none;display:flex;flex-direction:column;gap:16px;margin-top:8px}
-  .painlist li{display:flex;gap:14px;font-weight:300;font-size:1.02rem;line-height:1.6;color:var(--paper)}
-  .painlist li::before{content:"—";color:var(--rose);flex-shrink:0}
 
-  /* ---------- kpi mock ---------- */
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:46px}
-  .kpi{
-    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px 22px;
+  /* ============================================
+     PROGRESS BAR (TOP)
+     ============================================ */
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    z-index: 100;
+    background: rgba(232, 237, 246, 0.04);
+    backdrop-filter: blur(10px);
   }
-  .kpi .lbl{font-family:var(--mono);font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
-  .kpi .val{font-family:var(--mono);font-size:clamp(1.15rem,1.85vw,1.7rem);margin-top:14px;font-weight:500}
-  .kpi .sub{font-size:.74rem;color:var(--muted);margin-top:9px}
-  .v-mint{color:var(--mint)} .v-rose{color:var(--rose)}
 
-  /* ---------- feature rows ---------- */
-  .feat{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
-  .fcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:28px 26px}
-  .fcard h3{font-family:var(--serif);font-weight:500;font-size:1.18rem;margin:16px 0 12px}
-  .fcard p{font-weight:300;font-size:.88rem;line-height:1.7;color:var(--muted)}
-  .fcard .glyph{font-family:var(--mono);font-size:.7rem;color:var(--mint);letter-spacing:.22em;text-transform:uppercase}
+  .progress-bar::after {
+    content: "";
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(
+      90deg,
+      rgba(0, 212, 155, 0),
+      rgba(0, 212, 155, 1),
+      rgba(0, 212, 155, 0.4)
+    );
+    box-shadow: 0 0 30px rgba(0, 212, 155, 0.8), inset 0 0 15px rgba(0, 212, 155, 0.5);
+    transition: width 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
 
-  /* ---------- steps ---------- */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:52px;border-top:1px solid var(--line)}
-  .step{padding:34px 30px 0 0;border-right:1px solid var(--line);margin-right:30px}
-  .step:last-child{border-right:0;margin-right:0}
-  .step .num{font-family:var(--mono);color:var(--mint);font-size:.75rem;letter-spacing:.3em}
-  .step h3{font-family:var(--serif);font-weight:500;font-size:1.35rem;margin:18px 0 12px}
-  .step p{font-weight:300;font-size:.9rem;line-height:1.75;color:var(--muted)}
+  /* ============================================
+     SLIDE MECHANICS - VERTICAL (UP/DOWN)
+     ============================================ */
 
-  /* ---------- closing ---------- */
-  .close-big{font-family:var(--serif);font-weight:300;font-size:clamp(2.6rem,5.6vw,4.8rem);line-height:1.15}
-  .contact{display:flex;gap:60px;margin-top:70px;font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
-  .contact b{display:block;color:var(--paper);font-weight:400;margin-bottom:8px;letter-spacing:.26em}
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: min(10vh, 100px) min(10vw, 140px);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1;
+    pointer-events: none;
+  }
 
-  @media (max-width:900px){
-    .slide{padding:12vh 7vw;overflow-y:auto;justify-content:flex-start}
-    .cols,.feat,.steps,.kpis{grid-template-columns:1fr}
-    .step{border-right:0;margin:0 0 26px}
-    .hint,.counter{display:none}
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    z-index: 2;
+  }
+
+  /* DOWNWARD SLIDE (next slide enters from top) */
+  .slide.slide-down-enter {
+    animation: slideDownEnter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .slide.slide-down-exit {
+    animation: slideDownExit 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  /* UPWARD SLIDE (previous slide enters from bottom) */
+  .slide.slide-up-enter {
+    animation: slideUpEnter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .slide.slide-up-exit {
+    animation: slideUpExit 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes slideDownEnter {
+    from {
+      opacity: 0;
+      transform: translateY(-140px) rotateX(25deg) scale(0.92);
+      filter: blur(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) rotateX(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes slideDownExit {
+    from {
+      opacity: 1;
+      transform: translateY(0) rotateX(0) scale(1);
+      filter: blur(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(120px) rotateX(-25deg) scale(0.92);
+      filter: blur(10px);
+    }
+  }
+
+  @keyframes slideUpEnter {
+    from {
+      opacity: 0;
+      transform: translateY(140px) rotateX(-25deg) scale(0.92);
+      filter: blur(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) rotateX(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  @keyframes slideUpExit {
+    from {
+      opacity: 1;
+      transform: translateY(0) rotateX(0) scale(1);
+      filter: blur(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-120px) rotateX(25deg) scale(0.92);
+      filter: blur(10px);
+    }
+  }
+
+  /* ============================================
+     CONTENT ANIMATIONS - STAGGERED ENTRANCE
+     ============================================ */
+
+  .fade-in {
+    opacity: 0;
+    animation: fadeIn 0.7s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  .slide-up-content {
+    opacity: 0;
+    transform: translateY(40px);
+    animation: slideUpContent 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes slideUpContent {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .scale-in {
+    opacity: 0;
+    transform: scale(0.88);
+    animation: scaleInAnim 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes scaleInAnim {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .delay-1 { animation-delay: 0.15s !important; }
+  .delay-2 { animation-delay: 0.3s !important; }
+  .delay-3 { animation-delay: 0.45s !important; }
+  .delay-4 { animation-delay: 0.6s !important; }
+  .delay-5 { animation-delay: 0.75s !important; }
+
+  /* ============================================
+     SHARED FURNITURE
+     ============================================ */
+
+  .ledger {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--line) 0 120px,
+      transparent 120px 132px
+    );
+    opacity: 0.5;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 26px;
+    font-weight: 300;
+    position: relative;
+    display: inline-block;
+    width: fit-content;
+  }
+
+  .eyebrow::before {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: var(--mint);
+    box-shadow: 0 0 12px rgba(0, 212, 155, 0.6);
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .slide.active .eyebrow::before {
+    width: 100%;
+  }
+
+  .eyebrow b {
+    color: var(--mint);
+    font-weight: 500;
+  }
+
+  /* ============================================
+     FIXED UI HEADER
+     ============================================ */
+
+  .counter {
+    position: fixed;
+    top: 28px;
+    right: 44px;
+    z-index: 50;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    font-weight: 300;
+    backdrop-filter: blur(15px);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(232, 237, 246, 0.08);
+  }
+
+  .brandmark {
+    position: fixed;
+    top: 22px;
+    left: 44px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    font-weight: 300;
+    backdrop-filter: blur(15px);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(232, 237, 246, 0.08);
+  }
+
+  .brandmark i {
+    width: 8px;
+    height: 8px;
+    background: var(--mint);
+    border-radius: 2px;
+    display: inline-block;
+    box-shadow: 0 0 12px rgba(0, 212, 155, 0.6);
+  }
+
+  /* ============================================
+     NAVIGATION
+     ============================================ */
+
+  .dots {
+    position: fixed;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 50;
+    backdrop-filter: blur(15px);
+    padding: 12px 20px;
+    border-radius: 28px;
+    border: 1px solid rgba(232, 237, 246, 0.08);
+  }
+
+  .dots button {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
+    background: rgba(232, 237, 246, 0.15);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity: 0.6;
+  }
+
+  .dots button:hover {
+    opacity: 0.9;
+    transform: scale(1.3);
+  }
+
+  .dots button.on {
+    background: var(--mint);
+    box-shadow: 0 0 20px rgba(0, 212, 155, 0.7);
+    transform: scale(1.5);
+    opacity: 1;
+  }
+
+  .arrows {
+    position: fixed;
+    bottom: 24px;
+    right: 44px;
+    display: flex;
+    gap: 12px;
+    z-index: 50;
+  }
+
+  .arrows button {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1.5px solid rgba(232, 237, 246, 0.12);
+    background: rgba(16, 26, 48, 0.3);
+    backdrop-filter: blur(15px);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 17px;
+    font-weight: 300;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .arrows button:hover {
+    border-color: var(--mint);
+    color: var(--mint);
+    box-shadow: 0 0 24px rgba(0, 212, 155, 0.5);
+    transform: scale(1.08) translateY(-2px);
+  }
+
+  .arrows button:active {
+    transform: scale(0.96);
+  }
+
+  .hint {
+    position: fixed;
+    bottom: 38px;
+    left: 44px;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: rgba(131, 148, 174, 0.5);
+    letter-spacing: 0.14em;
+    z-index: 50;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
+
+  .hint:hover {
+    opacity: 1;
+  }
+
+  button:focus-visible {
+    outline: 2px solid var(--mint);
+    outline-offset: 4px;
+  }
+
+  /* ============================================
+     TYPOGRAPHY
+     ============================================ */
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(3.4rem, 8.5vw, 7.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(2.2rem, 4.6vw, 3.9rem);
+    line-height: 1.12;
+    margin-bottom: 34px;
+  }
+
+  h2 em,
+  h1 em {
+    font-style: normal;
+    color: var(--mint);
+    font-weight: 400;
+  }
+
+  .lead {
+    font-weight: 300;
+    font-size: clamp(1rem, 1.45vw, 1.22rem);
+    line-height: 1.75;
+    color: var(--muted);
+    max-width: 56ch;
+  }
+
+  .lead strong {
+    color: var(--paper);
+    font-weight: 500;
+  }
+
+  /* ============================================
+     COVER SLIDE
+     ============================================ */
+
+  .cover-word {
+    margin: 18px 0 30px;
+  }
+
+  .cover-sub {
+    display: flex;
+    gap: 26px;
+    align-items: center;
+  }
+
+  .cover-sub .rule {
+    height: 2.5px;
+    width: 80px;
+    background: var(--mint);
+    border-radius: 1px;
+    box-shadow: 0 0 20px rgba(0, 212, 155, 0.6);
+    min-width: 80px;
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 56px;
+    margin-top: 64px;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  .meta-row span {
+    position: relative;
+    padding-bottom: 10px;
+  }
+
+  .meta-row span::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 1.5px;
+    width: 0%;
+    background: rgba(0, 212, 155, 0.4);
+    box-shadow: 0 0 10px rgba(0, 212, 155, 0.5);
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .slide.active .meta-row span::after {
+    width: 100%;
+  }
+
+  .meta-row span b {
+    display: block;
+    color: var(--paper);
+    font-weight: 400;
+    margin-bottom: 7px;
+    letter-spacing: 0.28em;
+  }
+
+  /* ============================================
+     TWO-COLUMN LAYOUT
+     ============================================ */
+
+  .cols {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: min(7vw, 96px);
+    align-items: start;
+  }
+
+  .ledger-card {
+    background: rgba(16, 26, 48, 0.4);
+    border: 1px solid rgba(232, 237, 246, 0.12);
+    border-radius: 18px;
+    padding: 32px 36px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 2.15;
+    color: var(--muted);
+    backdrop-filter: blur(25px);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ledger-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 212, 155, 0.08), rgba(72, 96, 255, 0.08));
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+  }
+
+  .ledger-card:hover::before {
+    opacity: 1;
+  }
+
+  .ledger-card:hover {
+    border-color: rgba(0, 212, 155, 0.4);
+    box-shadow: 0 24px 56px rgba(0, 212, 155, 0.15), inset 0 1px 0 rgba(232, 237, 246, 0.12);
+    transform: translateY(-6px);
+  }
+
+  .ledger-card .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px dashed rgba(232, 237, 246, 0.04);
+    padding: 14px 0;
+  }
+
+  .ledger-card .row:last-child {
+    border-bottom: 0;
+  }
+
+  .ledger-card .in {
+    color: var(--mint);
+    font-weight: 500;
+  }
+
+  .ledger-card .out {
+    color: var(--rose);
+    font-weight: 500;
+  }
+
+  .painlist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 8px;
+  }
+
+  .painlist li {
+    display: flex;
+    gap: 14px;
+    font-weight: 300;
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: var(--paper);
+    opacity: 0;
+    animation: fadeInUp 0.7s ease-out forwards;
+  }
+
+  .painlist li:nth-child(1) { animation-delay: 0.25s; }
+  .painlist li:nth-child(2) { animation-delay: 0.4s; }
+  .painlist li:nth-child(3) { animation-delay: 0.55s; }
+  .painlist li:nth-child(4) { animation-delay: 0.7s; }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(25px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .painlist li::before {
+    content: "→";
+    color: var(--rose);
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  /* ============================================
+     KPI CARDS
+     ============================================ */
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+    margin-top: 46px;
+  }
+
+  .kpi {
+    background: rgba(16, 26, 48, 0.5);
+    border: 1px solid rgba(232, 237, 246, 0.12);
+    border-radius: 18px;
+    padding: 32px 26px;
+    backdrop-filter: blur(25px);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    animation: scaleUpFadeKPI 0.7s ease-out forwards;
+  }
+
+  .kpi:nth-child(1) { animation-delay: 0.15s; }
+  .kpi:nth-child(2) { animation-delay: 0.3s; }
+  .kpi:nth-child(3) { animation-delay: 0.45s; }
+  .kpi:nth-child(4) { animation-delay: 0.6s; }
+
+  @keyframes scaleUpFadeKPI {
+    from {
+      opacity: 0;
+      transform: scale(0.82) translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .kpi::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 212, 155, 0.1), rgba(72, 96, 255, 0.1));
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+  }
+
+  .kpi:hover::before {
+    opacity: 1;
+  }
+
+  .kpi:hover {
+    border-color: rgba(0, 212, 155, 0.5);
+    box-shadow: 0 28px 60px rgba(0, 212, 155, 0.18), inset 0 1px 0 rgba(232, 237, 246, 0.12);
+    transform: translateY(-8px);
+  }
+
+  .kpi .lbl {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .kpi .val {
+    font-family: var(--mono);
+    font-size: clamp(1.15rem, 1.85vw, 1.7rem);
+    margin-top: 16px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--paper), rgba(232, 237, 246, 0.7));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .kpi .sub {
+    font-size: 0.74rem;
+    color: var(--muted);
+    margin-top: 10px;
+    font-weight: 300;
+  }
+
+  .v-mint {
+    color: var(--mint) !important;
+    -webkit-text-fill-color: var(--mint) !important;
+  }
+
+  .v-rose {
+    color: var(--rose) !important;
+    -webkit-text-fill-color: var(--rose) !important;
+  }
+
+  /* ============================================
+     FEATURE CARDS
+     ============================================ */
+
+  .feat {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    margin-top: 44px;
+  }
+
+  .fcard {
+    background: rgba(16, 26, 48, 0.5);
+    border: 1px solid rgba(232, 237, 246, 0.12);
+    border-radius: 18px;
+    padding: 36px 32px;
+    backdrop-filter: blur(25px);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    animation: slideUpCard 0.7s ease-out forwards;
+  }
+
+  .fcard:nth-child(1) { animation-delay: 0.2s; }
+  .fcard:nth-child(2) { animation-delay: 0.35s; }
+  .fcard:nth-child(3) { animation-delay: 0.5s; }
+
+  @keyframes slideUpCard {
+    from {
+      opacity: 0;
+      transform: translateY(35px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fcard::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0, 212, 155, 0.1), rgba(72, 96, 255, 0.1));
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+  }
+
+  .fcard:hover::before {
+    opacity: 1;
+  }
+
+  .fcard:hover {
+    border-color: rgba(0, 212, 155, 0.5);
+    box-shadow: 0 28px 60px rgba(0, 212, 155, 0.18), inset 0 1px 0 rgba(232, 237, 246, 0.12);
+    transform: translateY(-8px);
+  }
+
+  .fcard h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.2rem;
+    margin: 18px 0 12px;
+    color: var(--paper);
+  }
+
+  .fcard p {
+    font-weight: 300;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .fcard .glyph {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--mint);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  /* ============================================
+     STEPS / PHASES
+     ============================================ */
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    margin-top: 52px;
+    border-top: 1px solid rgba(232, 237, 246, 0.08);
+  }
+
+  .step {
+    padding: 38px 32px 0 0;
+    border-right: 1px solid rgba(232, 237, 246, 0.08);
+    margin-right: 32px;
+    opacity: 0;
+    animation: slideUpCard 0.7s ease-out forwards;
+  }
+
+  .step:nth-child(1) { animation-delay: 0.2s; }
+  .step:nth-child(2) { animation-delay: 0.35s; }
+  .step:nth-child(3) { animation-delay: 0.5s; }
+
+  .step:last-child {
+    border-right: 0;
+    margin-right: 0;
+  }
+
+  .step:hover {
+    transform: translateY(-4px);
+  }
+
+  .step .num {
+    font-family: var(--mono);
+    color: var(--mint);
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+  }
+
+  .step h3 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.38rem;
+    margin: 18px 0 12px;
+    color: var(--paper);
+  }
+
+  .step p {
+    font-weight: 300;
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--muted);
+  }
+
+  /* ============================================
+     CLOSING SLIDE
+     ============================================ */
+
+  .close-big {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(2.6rem, 5.6vw, 4.8rem);
+    line-height: 1.15;
+  }
+
+  .contact {
+    display: flex;
+    gap: 60px;
+    margin-top: 70px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  .contact span {
+    opacity: 0;
+    animation: fadeInUp 0.7s ease-out forwards;
+  }
+
+  .contact span:nth-child(1) { animation-delay: 0.25s; }
+  .contact span:nth-child(2) { animation-delay: 0.4s; }
+  .contact span:nth-child(3) { animation-delay: 0.55s; }
+
+  .contact b {
+    display: block;
+    color: var(--paper);
+    font-weight: 500;
+    margin-bottom: 8px;
+    letter-spacing: 0.26em;
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+
+  @media (max-width: 900px) {
+    .slide {
+      padding: 12vh 7vw;
+      overflow-y: auto;
+      justify-content: flex-start;
+    }
+
+    .cols,
+    .feat,
+    .steps,
+    .kpis {
+      grid-template-columns: 1fr;
+    }
+
+    .step {
+      border-right: 0;
+      margin: 0 0 28px;
+      padding-right: 0;
+      border-bottom: 1px solid rgba(232, 237, 246, 0.08);
+      padding-bottom: 28px;
+    }
+
+    .hint,
+    .counter {
+      display: none;
+    }
+
+    .meta-row {
+      gap: 30px;
+    }
+
+    .dots,
+    .arrows {
+      bottom: 20px;
+    }
+  }
+
+  /* ============================================
+     REDUCED MOTION
+     ============================================ */
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01s !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01s !important;
+    }
+
+    .deck::before,
+    .deck::after {
+      animation: none;
+    }
   }
 </style>
 </head>
 <body>
 
-<div class="brandmark"><i></i>ELITE&nbsp;INTEL</div>
+<div class="progress-bar"></div>
+<div class="brandmark"><i></i>ELITE INTEL</div>
 <div class="counter">01 / 13</div>
 
 <div class="deck">
@@ -159,13 +1028,13 @@
   <!-- 1 · PORTADA -->
   <section class="slide active">
     <div class="ledger" style="top:22%"></div>
-    <p class="eyebrow">Presentación de producto <b>· 2026</b></p>
-    <h1 class="cover-word">Gestión operativa<br />y financiera <em>integrada.</em></h1>
-    <div class="cover-sub">
+    <p class="eyebrow slide-up-content">Presentación de producto <b>· 2026</b></p>
+    <h1 class="cover-word slide-up-content delay-1">Gestión operativa<br />y financiera <em>integrada.</em></h1>
+    <div class="cover-sub slide-up-content delay-2">
       <span class="rule"></span>
       <p class="lead">Elite Intel consolida ventas, gastos, inventario e indicadores de ahorro en una única plataforma de administración. Implementación local, operación autónoma y control total sobre la información.</p>
     </div>
-    <div class="meta-row">
+    <div class="meta-row slide-up-content delay-3">
       <span><b>Producto</b>Elite Intel Desktop</span>
       <span><b>Dirigido a</b>Administración del negocio</span>
       <span><b>Arquitectura</b>On-premise · Un solo equipo</span>
@@ -174,8 +1043,8 @@
 
   <!-- 2 · PROBLEMA -->
   <section class="slide">
-    <p class="eyebrow">Diagnóstico inicial</p>
-    <div class="cols">
+    <p class="eyebrow slide-up-content">Diagnóstico inicial</p>
+    <div class="cols slide-up-content delay-1">
       <div>
         <h2>El registro manual<br />introduce <em>riesgo operativo.</em></h2>
         <ul class="painlist">
@@ -185,7 +1054,7 @@
           <li>Dependencia total de procesos manuales y del criterio individual para cada cierre.</li>
         </ul>
       </div>
-      <div class="ledger-card">
+      <div class="ledger-card scale-in delay-2">
         <div class="row"><span>Registro en cuaderno</span><span class="out">sin respaldo</span></div>
         <div class="row"><span>Kardex xlsx</span><span class="out">versión desactualizada</span></div>
         <div class="row"><span>Precio de artículo</span><span class="out">valor ambiguo</span></div>
@@ -197,9 +1066,9 @@
 
   <!-- 3 · SOLUCIÓN -->
   <section class="slide">
-    <p class="eyebrow">Propuesta de valor</p>
-    <h2>Una plataforma.<br />Toda la operación. <em>Datos confiables.</em></h2>
-    <p class="lead">Elite Intel procesa los registros del kardex y del libro diario operativo, los normaliza y los presenta como información estructurada: cada ingreso, cada egreso y cada artículo del catálogo con trazabilidad completa y valores actualizados.</p>
+    <p class="eyebrow slide-up-content">Propuesta de valor</p>
+    <h2 class="slide-up-content delay-1">Una plataforma.<br />Toda la operación. <em>Datos confiables.</em></h2>
+    <p class="lead slide-up-content delay-2">Elite Intel procesa los registros del kardex y del libro diario operativo, los normaliza y los presenta como información estructurada: cada ingreso, cada egreso y cada artículo del catálogo con trazabilidad completa y valores actualizados.</p>
     <div class="kpis">
       <div class="kpi"><span class="lbl">Ingresos</span><div class="val v-mint">$ 2.021.900</div><div class="sub">período: agosto · mes en curso</div></div>
       <div class="kpi"><span class="lbl">Egresos</span><div class="val v-rose">$ 3.425.000</div><div class="sub">clasificados por categoría</div></div>
@@ -210,8 +1079,8 @@
 
   <!-- 4 · INVENTARIO -->
   <section class="slide">
-    <p class="eyebrow">Módulo de inventario y catálogo</p>
-    <div class="cols">
+    <p class="eyebrow slide-up-content">Módulo de inventario y catálogo</p>
+    <div class="cols slide-up-content delay-1">
       <div>
         <h2>Control de artículos,<br />precios y <em>existencias.</em></h2>
         <p class="lead">Catálogo operativo con 148 artículos activos. Precios de factura y de venta local editables desde la interfaz, con actualización masiva ante nuevas listas de proveedor. Cada modificación se replica automáticamente en la hoja de precios en formato Excel, eliminando la doble digitación.</p>
@@ -226,13 +1095,13 @@
 
   <!-- 5 · APLICACIÓN DE ESCRITORIO -->
   <section class="slide">
-    <p class="eyebrow">Arquitectura de implementación</p>
-    <div class="cols">
+    <p class="eyebrow slide-up-content">Arquitectura de implementación</p>
+    <div class="cols slide-up-content delay-1">
       <div>
         <h2>Despliegue local,<br />operación <em>autónoma.</em></h2>
         <p class="lead">Elite Intel se distribuye como aplicación nativa de escritorio para Windows. No requiere conectividad, infraestructura externa ni suscripciones recurrentes. La base de datos reside íntegramente en el equipo del cliente: la información es propiedad exclusiva del negocio.</p>
       </div>
-      <div class="ledger-card">
+      <div class="ledger-card scale-in delay-2">
         <div class="row"><span>Instalación</span><span class="in">Un ejecutable · asistida</span></div>
         <div class="row"><span>Conectividad requerida</span><span class="in">Ninguna</span></div>
         <div class="row"><span>Costos recurrentes</span><span class="in">$ 0</span></div>
@@ -244,8 +1113,8 @@
 
   <!-- 6 · INTEGRIDAD -->
   <section class="slide">
-    <p class="eyebrow">Integridad y continuidad</p>
-    <h2>Diseñado para garantizar<br />la consistencia <em>del dato.</em></h2>
+    <p class="eyebrow slide-up-content">Integridad y continuidad</p>
+    <h2 class="slide-up-content delay-1">Diseñado para garantizar<br />la consistencia <em>del dato.</em></h2>
     <div class="feat">
       <div class="fcard">
         <span class="glyph">Resiliencia</span>
@@ -267,8 +1136,8 @@
 
   <!-- 7 · FLUJO OPERATIVO -->
   <section class="slide">
-    <p class="eyebrow">Flujo operativo</p>
-    <h2>Proceso estandarizado<br />de <em>tres etapas.</em></h2>
+    <p class="eyebrow slide-up-content">Flujo operativo</p>
+    <h2 class="slide-up-content delay-1">Proceso estandarizado<br />de <em>tres etapas.</em></h2>
     <div class="steps">
       <div class="step">
         <span class="num">ETAPA 01</span>
@@ -290,22 +1159,22 @@
 
   <!-- 8 · RESULTADOS -->
   <section class="slide">
-    <p class="eyebrow">Resultados en producción</p>
-    <h2>Sistema en operación.<br /><em>Métricas verificables.</em></h2>
+    <p class="eyebrow slide-up-content">Resultados en producción</p>
+    <h2 class="slide-up-content delay-1">Sistema en operación.<br /><em>Métricas verificables.</em></h2>
     <div class="kpis" style="grid-template-columns:repeat(4,1fr)">
       <div class="kpi"><span class="lbl">Transacciones registradas</span><div class="val">481</div><div class="sub">primer mes de operación</div></div>
       <div class="kpi"><span class="lbl">Artículos en catálogo</span><div class="val">148</div><div class="sub">con precios y existencias activos</div></div>
       <div class="kpi"><span class="lbl">Categorías configuradas</span><div class="val">17</div><div class="sub">ingresos y egresos diferenciados</div></div>
       <div class="kpi"><span class="lbl">Días continuos de operación</span><div class="val">19</div><div class="sub">sin pérdida de registros</div></div>
     </div>
-    <p class="lead" style="margin-top:44px">Cifras reales extraídas del sistema en producción al cierre del presente informe. Disponibles para verificación directa frente a la aplicación.</p>
+    <p class="lead slide-up-content delay-1" style="margin-top:44px">Cifras reales extraídas del sistema en producción al cierre del presente informe. Disponibles para verificación directa frente a la aplicación.</p>
   </section>
 
   <!-- 9 · SERVICIOS BAJO DEMANDA -->
   <section class="slide">
-    <p class="eyebrow">Próxima fase · <b>Servicios bajo demanda</b></p>
-    <h2>El cliente solicita.<br /><em>Tu servidor ejecuta.</em></h2>
-    <div class="cols">
+    <p class="eyebrow slide-up-content">Próxima fase · <b>Servicios bajo demanda</b></p>
+    <h2 class="slide-up-content delay-1">El cliente solicita.<br /><em>Tu servidor ejecuta.</em></h2>
+    <div class="cols slide-up-content delay-2">
       <div>
         <p class="lead">Elite Intel se expande hacia una <strong>plataforma de servicios automatizados</strong>. El cliente accede a una página web, elige el servicio que necesita, y el servidor local ejecuta la acción de forma automática sin intervención manual.</p>
         <ul class="painlist">
@@ -315,7 +1184,7 @@
           <li>Escalable: nuevos servicios se agregan sin modificar la plataforma.</li>
         </ul>
       </div>
-      <div class="ledger-card">
+      <div class="ledger-card scale-in delay-3">
         <div class="row"><span>Cliente solicita</span><span class="in">vía página web</span></div>
         <div class="row"><span>Servidor recibe</span><span class="in">automáticamente</span></div>
         <div class="row"><span>Acción se ejecuta</span><span class="in">sin intervención</span></div>
@@ -326,8 +1195,8 @@
 
   <!-- 10 · CÓMO FUNCIONA -->
   <section class="slide">
-    <p class="eyebrow">Arquitectura de servicio</p>
-    <h2>De la solicitud<br />a la <em>ejecución automática.</em></h2>
+    <p class="eyebrow slide-up-content">Arquitectura de servicio</p>
+    <h2 class="slide-up-content delay-1">De la solicitud<br />a la <em>ejecución automática.</em></h2>
     <div class="steps">
       <div class="step">
         <span class="num">PASO 01</span>
@@ -349,8 +1218,8 @@
 
   <!-- 11 · SERVICIOS DISPONIBLES -->
   <section class="slide">
-    <p class="eyebrow">Catálogo de servicios</p>
-    <h2>Servicios que se<br /><em>ejecutan automáticamente.</em></h2>
+    <p class="eyebrow slide-up-content">Catálogo de servicios</p>
+    <h2 class="slide-up-content delay-1">Servicios que se<br /><em>ejecutan automáticamente.</em></h2>
     <div class="feat">
       <div class="fcard">
         <span class="glyph">Recargas</span>
@@ -372,8 +1241,8 @@
 
   <!-- 12 · FASES DE IMPLEMENTACIÓN -->
   <section class="slide">
-    <p class="eyebrow">Roadmap de implementación</p>
-    <h2>Fases de <em>desarrollo.</em></h2>
+    <p class="eyebrow slide-up-content">Roadmap de implementación</p>
+    <h2 class="slide-up-content delay-1">Fases de <em>desarrollo.</em></h2>
     <div class="steps">
       <div class="step">
         <span class="num">FASE 01</span>
@@ -396,8 +1265,8 @@
   <!-- 13 · CIERRE -->
   <section class="slide">
     <div class="ledger" style="top:18%"></div>
-    <p class="eyebrow">Plan de implementación</p>
-    <p class="close-big">La operación ya genera<br />los datos. <em>Elite Intel</em><br />los convierte en decisiones.</p>
+    <p class="eyebrow slide-up-content">Plan de implementación</p>
+    <p class="close-big slide-up-content delay-1">La operación ya genera<br />los datos. <em>Elite Intel</em><br />los convierte en decisiones.</p>
     <div class="contact">
       <span><b>Implementación</b>Ejecutable único · sesión asistida</span>
       <span><b>Capacitación</b>Una sesión operativa</span>
@@ -407,50 +1276,143 @@
 
 </div>
 
-<div class="hint">← → PARA NAVEGAR</div>
+<div class="hint">↑ ↓ PARA NAVEGAR</div>
 <div class="dots"></div>
 <div class="arrows">
-  <button id="prev" aria-label="Anterior">←</button>
-  <button id="next" aria-label="Siguiente">→</button>
+  <button id="prev" aria-label="Anterior">↑</button>
+  <button id="next" aria-label="Siguiente">↓</button>
 </div>
 
 <script>
-  const slides=[...document.querySelectorAll('.slide')];
-  const dotsBox=document.querySelector('.dots');
-  const counter=document.querySelector('.counter');
-  let i=0;
-  slides.forEach((_,idx)=>{
-    const b=document.createElement('button');
-    b.setAttribute('aria-label','Ir a diapositiva '+(idx+1));
-    b.addEventListener('click',()=>go(idx));
-    dotsBox.appendChild(b);
-  });
-  const dots=[...dotsBox.children];
-  function go(n){
-    if(n<0||n>=slides.length)return;
-    slides[i].classList.remove('active');
-    i=n;
-    slides[i].classList.add('active');
-    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
-    counter.textContent=String(i+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');
+  const slides = [...document.querySelectorAll('.slide')];
+  const dotsBox = document.querySelector('.dots');
+  const progressBar = document.querySelector('.progress-bar');
+  const counter = document.querySelector('.counter');
+  const STORAGE_KEY = 'elite-intel-slide-vertical';
+  
+  let currentIndex = 0;
+  let isTransitioning = false;
+
+  function buildDots() {
+    slides.forEach((_, idx) => {
+      const btn = document.createElement('button');
+      btn.setAttribute('aria-label', `Ir a diapositiva ${idx + 1}`);
+      btn.addEventListener('click', () => navigate(idx));
+      dotsBox.appendChild(btn);
+    });
   }
-  document.getElementById('next').addEventListener('click',()=>go(i+1));
-  document.getElementById('prev').addEventListener('click',()=>go(i-1));
-  document.addEventListener('keydown',e=>{
-    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')go(i+1);
-    if(e.key==='ArrowLeft'||e.key==='PageUp')go(i-1);
-    if(e.key==='Home')go(0);
-    if(e.key==='End')go(slides.length-1);
+
+  function updateProgress() {
+    const percent = ((currentIndex + 1) / slides.length) * 100;
+    const progressElement = progressBar.querySelector('::after') || progressBar;
+    if (progressBar.style) {
+      progressBar.style.setProperty('--progress', percent + '%');
+    }
+  }
+
+  function updateCounter() {
+    counter.textContent = String(currentIndex + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+  }
+
+  function updateDots() {
+    document.querySelectorAll('.dots button').forEach((dot, idx) => {
+      dot.classList.toggle('on', idx === currentIndex);
+    });
+  }
+
+  function removeAnimationClasses(slide) {
+    slide.classList.remove('slide-down-enter', 'slide-down-exit', 'slide-up-enter', 'slide-up-exit');
+  }
+
+  function navigate(targetIndex) {
+    if (targetIndex === currentIndex || isTransitioning || targetIndex < 0 || targetIndex >= slides.length) {
+      return;
+    }
+
+    isTransitioning = true;
+
+    const currentSlide = slides[currentIndex];
+    const targetSlide = slides[targetIndex];
+    const isMovingDown = targetIndex > currentIndex;
+
+    removeAnimationClasses(currentSlide);
+    removeAnimationClasses(targetSlide);
+
+    if (isMovingDown) {
+      currentSlide.classList.add('slide-down-exit');
+      targetSlide.classList.add('slide-down-enter');
+    } else {
+      currentSlide.classList.add('slide-up-exit');
+      targetSlide.classList.add('slide-up-enter');
+    }
+
+    currentSlide.classList.remove('active');
+    targetSlide.classList.add('active');
+
+    currentIndex = targetIndex;
+    updateCounter();
+    updateDots();
+    updateProgress();
+    localStorage.setItem(STORAGE_KEY, String(currentIndex));
+
+    setTimeout(() => {
+      removeAnimationClasses(currentSlide);
+      removeAnimationClasses(targetSlide);
+      isTransitioning = false;
+    }, 800);
+  }
+
+  function safeNavigate(direction) {
+    const targetIndex = currentIndex + direction;
+    navigate(targetIndex);
+  }
+
+  buildDots();
+  updateCounter();
+  updateDots();
+  updateProgress();
+
+  document.getElementById('next').addEventListener('click', () => safeNavigate(1));
+  document.getElementById('prev').addEventListener('click', () => safeNavigate(-1));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      safeNavigate(1);
+    }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      safeNavigate(-1);
+    }
+    if (e.key === 'Home') {
+      e.preventDefault();
+      navigate(0);
+    }
+    if (e.key === 'End') {
+      e.preventDefault();
+      navigate(slides.length - 1);
+    }
   });
-  let tx=null;
-  document.addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
-  document.addEventListener('touchend',e=>{
-    if(tx===null)return;
-    const dx=e.changedTouches[0].clientX-tx;
-    if(Math.abs(dx)>60)go(i+(dx<0?1:-1));
-    tx=null;
-  },{passive:true});
-  go(0);
+
+  let touchStart = null;
+  document.addEventListener('touchstart', (e) => {
+    touchStart = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    if (!touchStart) return;
+    const diff = touchStart - e.changedTouches[0].clientY;
+    if (Math.abs(diff) > 60) {
+      safeNavigate(diff > 0 ? 1 : -1);
+    }
+    touchStart = null;
+  }, { passive: true });
+
+  const savedIndex = Number(localStorage.getItem(STORAGE_KEY)) || 0;
+  if (savedIndex > 0 && savedIndex < slides.length) {
+    navigate(savedIndex);
+  }
 </script>
+
 </body>
 </html>
